@@ -28,8 +28,8 @@ export function ExceptionEditor({ exclusions, minDate, maxDate, onChange }: Prop
   return (
     <section className="panel exceptions-panel">
       <div className="section-heading">
-        <span className="eyebrow">Kalender</span>
-        <h2>Uitzonderingen</h2>
+        <span className="eyebrow">Alleen deze klas</span>
+        <h2>Klasuitzonderingen</h2>
       </div>
       <div className="exception-form">
         <label>
@@ -41,7 +41,7 @@ export function ExceptionEditor({ exclusions, minDate, maxDate, onChange }: Prop
           <input value={reason} placeholder="Bijv. herfstvakantie" onChange={(event) => setReason(event.target.value)} />
         </label>
         <button className="button ghost" type="button" onClick={addException} disabled={!date || !reason.trim()}>
-          Uitzondering toevoegen
+          Klasdag toevoegen
         </button>
       </div>
       {exclusions.length > 0 && (

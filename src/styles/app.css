@@ -96,6 +96,13 @@ table { width: 100%; border-collapse: collapse; }
 .exception-list { display: grid; gap: .4rem; padding: .8rem 0 0; margin: .7rem 0 0; border-top: 1px solid var(--line); list-style: none; }
 .exception-list li { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .8rem; }
 .exception-list strong { margin-right: .25rem; }
+.panel-help { margin: -.35rem 0 1rem; color: var(--muted); font-size: .82rem; line-height: 1.45; }
+.inline-error { padding: .65rem .75rem; border-radius: 7px; color: #7b342c; background: #f7e2de; font-size: .8rem; }
+.school-password { margin-top: 1rem; }
+.school-file-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; margin-top: .55rem; }
+.school-file-actions .button:last-of-type { grid-column: 1 / -1; }
+.server-updated { margin: .7rem 0 0; color: var(--muted); font-size: .7rem; }
+.school-message { margin: .7rem 0 0; padding: .6rem .7rem; border-radius: 7px; color: var(--brand-dark); background: var(--brand-soft); font-size: .78rem; font-weight: 700; }
 .reset-button { border: 0; padding: .6rem; color: var(--danger); background: transparent; text-decoration: underline; text-underline-offset: 3px; }
 
 .schedule-card, .statistics-section { border-radius: 22px; overflow: hidden; }

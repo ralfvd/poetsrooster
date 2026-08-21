@@ -21,6 +21,12 @@ export type ExcludedDate = {
   reason: string;
 };
 
+export type SchoolExceptionFile = {
+  version: 1;
+  updatedAt: string | null;
+  exceptions: ExcludedDate[];
+};
+
 export type Assignment = {
   studentId: string | null;
   locked: boolean;

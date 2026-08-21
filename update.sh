@@ -23,6 +23,7 @@ docker compose version >/dev/null 2>&1 || fail "Docker Compose is niet beschikba
 
 [[ -d .git ]] || fail "Deze map is geen Git-repository. Clone de repository eerst op de server."
 [[ -f docker-compose.yml ]] || fail "docker-compose.yml ontbreekt."
+[[ -f .env ]] || fail "Het bestand .env ontbreekt. Kopieer .env.example naar .env en stel SCHOOL_ADMIN_PASSWORD in."
 
 if [[ -n "$(git status --porcelain)" ]]; then
   fail "De repository bevat lokale wijzigingen. Commit of verwijder die eerst; de update is niet uitgevoerd."

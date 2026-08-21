@@ -3,16 +3,26 @@ import { ClassEditor } from "./components/ClassEditor";
 import { ExceptionEditor } from "./components/ExceptionEditor";
 import { ScheduleSettings } from "./components/ScheduleSettings";
 import { ScheduleTable } from "./components/ScheduleTable";
+import { SchoolExceptionEditor } from "./components/SchoolExceptionEditor";
 import { Statistics } from "./components/Statistics";
 import { WarningPanel } from "./components/WarningPanel";
 import { copyScheduleToClipboard, downloadSchedulePdf } from "./services/export";
 import { optimizeSchedule } from "./services/optimizer";
+import { loadSchoolExceptions } from "./services/schoolExceptions";
 import { LocalStorageProvider } from "./services/storage";
-import type { ExcludedDate, PersistedState, ScheduleSettings as Settings, Student } from "./types";
+import type {
+  ExcludedDate,
+  PersistedState,
+  ScheduleSettings as Settings,
+  SchoolExceptionFile,
+  Student,
+} from "./types";
 import { formatLongDate } from "./utils/dates";
+import { mergeExclusions } from "./utils/exclusions";
 import { activeSlotCount, filledSlotCount, generateSchedule } from "./utils/schedule";
 
 const storage = new LocalStorageProvider();
+const emptySchoolFile: SchoolExceptionFile = { version: 1, updatedAt: null, exceptions: [] };
 const defaultState: PersistedState = {
   version: 1,
   settings: {
@@ -31,11 +41,29 @@ export default function App() {
   const [state, setState] = useState<PersistedState>(defaultState);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [exportMessage, setExportMessage] = useState("");
+  const [schoolFile, setSchoolFile] = useState<SchoolExceptionFile>(emptySchoolFile);
+  const [schoolLoadError, setSchoolLoadError] = useState("");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    storage.load().then((saved) => {
-      if (saved) setState(saved);
+    Promise.allSettled([storage.load(), loadSchoolExceptions()]).then(([savedResult, schoolResult]) => {
+      const saved = savedResult.status === "fulfilled" ? savedResult.value : null;
+      const loadedSchoolFile = schoolResult.status === "fulfilled" ? schoolResult.value : emptySchoolFile;
+      const baseState = saved ?? defaultState;
+      setSchoolFile(loadedSchoolFile);
+      if (schoolResult.status === "rejected") {
+        setSchoolLoadError("De centrale schoolkalender kon niet worden geladen.");
+      }
+      setState({
+        ...baseState,
+        schedule: baseState.schedule.length
+          ? generateSchedule(
+              baseState.settings,
+              mergeExclusions(loadedSchoolFile.exceptions, baseState.excludedDates),
+              baseState.schedule,
+            )
+          : [],
+      });
       setReady(true);
     });
   }, []);
@@ -96,7 +124,11 @@ export default function App() {
     }
     setState((current) => ({
       ...current,
-      schedule: generateSchedule(current.settings, current.excludedDates, current.schedule),
+      schedule: generateSchedule(
+        current.settings,
+        mergeExclusions(schoolFile.exceptions, current.excludedDates),
+        current.schedule,
+      ),
     }));
     setWarnings([]);
   };
@@ -105,8 +137,35 @@ export default function App() {
     setState((current) => ({
       ...current,
       excludedDates,
-      schedule: generateSchedule(current.settings, excludedDates, current.schedule),
+      schedule: generateSchedule(
+        current.settings,
+        mergeExclusions(schoolFile.exceptions, excludedDates),
+        current.schedule,
+      ),
     }));
+  };
+
+  const applySchoolFile = (file: SchoolExceptionFile) => {
+    setSchoolFile(file);
+    setSchoolLoadError("");
+    setState((current) => ({
+      ...current,
+      schedule: current.schedule.length
+        ? generateSchedule(
+            current.settings,
+            mergeExclusions(file.exceptions, current.excludedDates),
+            current.schedule,
+          )
+        : [],
+    }));
+  };
+
+  const refreshSchoolFile = async () => {
+    try {
+      applySchoolFile(await loadSchoolExceptions());
+    } catch {
+      setSchoolLoadError("De centrale schoolkalender kon niet worden geladen.");
+    }
   };
 
   const optimize = () => {
@@ -240,6 +299,14 @@ export default function App() {
       <main className="main-layout">
         <aside className="sidebar no-print">
           <ScheduleSettings settings={state.settings} onChange={updateSettings} onGenerate={generate} />
+          <SchoolExceptionEditor
+            schoolFile={schoolFile}
+            loadError={schoolLoadError}
+            minDate={state.settings.startDate}
+            maxDate={state.settings.endDate}
+            onSaved={applySchoolFile}
+            onRefresh={refreshSchoolFile}
+          />
           <ClassEditor
             students={state.students}
             weekdays={state.settings.cleaningWeekdays}
