@@ -19,6 +19,14 @@ export function buildScheduleTitle(className: string): string {
   return cleanedClassName ? `Poetsrooster ${cleanedClassName}` : "Poetsrooster";
 }
 
+export function buildPrintedOnLabel(date = new Date()): string {
+  return `Afgedrukt op ${date.toLocaleDateString("nl-NL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })}`;
+}
+
 function exportRows(
   schedule: ScheduleDay[],
   students: Student[],
@@ -129,6 +137,10 @@ export async function createSchedulePdf(
     margin,
     14,
   );
+  doc.setTextColor(90, 90, 90);
+  doc.setFontSize(6.5);
+  doc.text(buildPrintedOnLabel(), pageWidth - margin, 14, { align: "right" });
+  doc.setTextColor(25, 37, 34);
 
   const drawRow = (values: string[], y: number, height: number, header = false, shaded = false) => {
     let x = margin;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ScheduleSettings, Student } from "../types";
 import { generateSchedule } from "../utils/schedule";
-import { buildScheduleTitle, buildScheduleTsv, createSchedulePdf } from "./export";
+import { buildPrintedOnLabel, buildScheduleTitle, buildScheduleTsv, createSchedulePdf } from "./export";
 
 const settings: ScheduleSettings = {
   className: "Groep 7B",
@@ -33,6 +33,10 @@ describe("schedule export", () => {
     expect(buildScheduleTitle("Groep 7B")).toBe("Poetsrooster Groep 7B");
     expect(buildScheduleTitle("  Groep 8A  ")).toBe("Poetsrooster Groep 8A");
     expect(buildScheduleTitle("")).toBe("Poetsrooster");
+  });
+
+  it("vermeldt de afdrukdatum in Nederlands datumformaat", () => {
+    expect(buildPrintedOnLabel(new Date(2026, 7, 21, 12))).toBe("Afgedrukt op 21-08-2026");
   });
 
   it("maakt plakbare tabgescheiden tekst met uitzonderingen", () => {

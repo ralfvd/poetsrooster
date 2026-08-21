@@ -51,6 +51,14 @@
     line-height: 1;
   }
 
+  .app-header .print-created-date {
+    display: block !important;
+    margin: .5mm 0 0;
+    color: #555;
+    font-size: 6pt;
+    line-height: 1;
+  }
+
   .main-layout,
   .content { display: block; }
 

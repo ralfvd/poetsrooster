@@ -8,7 +8,7 @@ import { ScheduleTable } from "./components/ScheduleTable";
 import { SchoolExceptionEditor } from "./components/SchoolExceptionEditor";
 import { Statistics } from "./components/Statistics";
 import { WarningPanel } from "./components/WarningPanel";
-import { buildScheduleTitle, copyScheduleToClipboard, downloadSchedulePdf } from "./services/export";
+import { buildPrintedOnLabel, buildScheduleTitle, copyScheduleToClipboard, downloadSchedulePdf } from "./services/export";
 import { optimizeSchedule } from "./services/optimizer";
 import { loadSchoolExceptions } from "./services/schoolExceptions";
 import { LocalStorageProvider } from "./services/storage";
@@ -295,6 +295,7 @@ export default function App() {
             <span className="print-only">{buildScheduleTitle(state.settings.className)}</span>
           </h1>
           <p className="print-period">{periodLabel}</p>
+          <p className="print-created-date print-only">{buildPrintedOnLabel()}</p>
         </div>
         <div className="header-actions no-print">
           {exportMessage && <span className="export-status" role="status">{exportMessage}</span>}
