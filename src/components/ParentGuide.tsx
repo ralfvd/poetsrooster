@@ -3,12 +3,14 @@ export function ParentGuide() {
     <details className="panel parent-guide">
       <summary>Hoe werkt het?</summary>
       <ol>
-        <li>Stel de klas, periode en poetsdagen in.</li>
-        <li>Maak de leerlingvelden en vul de namen in.</li>
-        <li>Voeg vrije dagen voor deze klas toe.</li>
+        <li>Stel bij <strong>Planning</strong> de klas, periode en poetsdagen in.</li>
+        <li>Voeg bij <strong>Klasuitzonderingen</strong> vrije dagen voor deze klas toe.</li>
+        <li>Maak bij <strong>Leerlingen</strong> de invulvelden en vul de namen en beschikbaarheid in.</li>
         <li>Kies <strong>Poetsdagen genereren</strong> en daarna <strong>Optimale verdeling</strong>.</li>
         <li>Controleer, pas eventueel handmatig aan en download of print het rooster.</li>
+        <li>Gebruik <strong>Back-up &amp; import</strong> om later op een andere computer verder te werken.</li>
       </ol>
+      <p className="guide-note">De schoolkalender onderaan is alleen voor beheerders; schoolbrede vrije dagen worden automatisch toegepast.</p>
     </details>
   );
 }
