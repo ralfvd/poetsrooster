@@ -141,12 +141,18 @@ function safeFilename(value: string): string {
   return cleaned || "poetsrooster";
 }
 
+export function buildRosterBackupFilename(className: string, exportedAt: string): string {
+  const date = exportedAt.slice(0, 10);
+  return `${safeFilename(className)}-poetsrooster-back-up-${date}.json`;
+}
+
 export function downloadRosterBackup(state: PersistedState): void {
-  const blob = new Blob([JSON.stringify(createRosterBackup(state), null, 2)], { type: "application/json" });
+  const backup = createRosterBackup(state);
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `${safeFilename(state.settings.className)}-back-up.json`;
+  anchor.download = buildRosterBackupFilename(state.settings.className, backup.exportedAt);
   anchor.click();
   URL.revokeObjectURL(url);
 }

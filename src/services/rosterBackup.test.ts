@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PersistedState } from "../types";
-import { createRosterBackup, normalizeRosterBackup } from "./rosterBackup";
+import { buildRosterBackupFilename, createRosterBackup, normalizeRosterBackup } from "./rosterBackup";
 
 const state: PersistedState = {
   version: 1,
@@ -43,5 +43,10 @@ describe("poetsroosterback-up", () => {
     const backup = createRosterBackup(state);
     backup.state.schedule[0].assignments[0].studentId = "onbekend";
     expect(() => normalizeRosterBackup(backup)).toThrow("onbekende leerling");
+  });
+
+  it("zet klasnaam en datum in de bestandsnaam", () => {
+    expect(buildRosterBackupFilename("Groep 7B", "2026-08-21T19:30:00.000Z"))
+      .toBe("groep-7b-poetsrooster-back-up-2026-08-21.json");
   });
 });
