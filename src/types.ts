@@ -67,4 +67,7 @@ export type StudentStatistic = {
   currentYearCount: number;
   totalCount: number;
   weekdayCounts: Record<number, number>;
+  minimumIntervalWeeks: number | null;
+  averageIntervalWeeks: number | null;
+  maximumIntervalWeeks: number | null;
 };

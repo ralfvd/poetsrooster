@@ -152,7 +152,7 @@ table { width: 100%; border-collapse: collapse; }
 .notes-cell { min-width: 190px; color: #74552f; font-size: .78rem; }
 .empty-schedule { display: grid; place-items: center; min-height: 280px; padding: 2rem; color: var(--muted); text-align: center; }
 .statistics-section { padding: 1.5rem 1.6rem; }
-.statistics-table { min-width: 520px; font-size: .82rem; }
+.statistics-table { min-width: 760px; font-size: .82rem; }
 .statistics-table th, .statistics-table td { padding: .58rem .7rem; border-bottom: 1px solid var(--line); text-align: right; }
 .statistics-table th:first-child { text-align: left; }
 .statistics-table thead th { color: var(--muted); font-size: .72rem; text-transform: uppercase; }

@@ -7,7 +7,7 @@ import type {
   StudentStatistic,
   Weekday,
 } from "../types";
-import { addDays, isoWeekday, parseDate, startOfWeek, toDateString } from "./dates";
+import { addDays, daysBetween, isoWeekday, parseDate, startOfWeek, toDateString } from "./dates";
 
 const emptyAssignment = (): Assignment => ({ studentId: null, locked: false, source: null });
 
@@ -66,8 +66,12 @@ export function calculateStatistics(
     currentYearCount: 0,
     totalCount: student.previousYearCount,
     weekdayCounts: {} as Record<number, number>,
+    minimumIntervalWeeks: null as number | null,
+    averageIntervalWeeks: null as number | null,
+    maximumIntervalWeeks: null as number | null,
   }));
   const byId = new Map(stats.map((stat) => [stat.student.id, stat]));
+  const datesById = new Map(students.map((student) => [student.id, [] as string[]]));
   for (const day of schedule) {
     for (const assignment of day.assignments) {
       if (!assignment.studentId) continue;
@@ -76,7 +80,16 @@ export function calculateStatistics(
       stat.currentYearCount += 1;
       stat.totalCount += 1;
       stat.weekdayCounts[day.weekday] = (stat.weekdayCounts[day.weekday] ?? 0) + 1;
+      datesById.get(assignment.studentId)?.push(day.date);
     }
+  }
+  for (const stat of stats) {
+    const dates = datesById.get(stat.student.id)?.sort() ?? [];
+    if (dates.length < 2) continue;
+    const intervals = dates.slice(1).map((date, index) => daysBetween(dates[index], date) / 7);
+    stat.minimumIntervalWeeks = Math.min(...intervals);
+    stat.averageIntervalWeeks = intervals.reduce((total, interval) => total + interval, 0) / intervals.length;
+    stat.maximumIntervalWeeks = Math.max(...intervals);
   }
   return stats.sort((a, b) => a.student.name.localeCompare(b.student.name, "nl"));
 }
