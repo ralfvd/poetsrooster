@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ExcludedDate } from "../types";
 import { formatDate } from "../utils/dates";
+import { createId } from "../utils/id";
 
 type Props = {
   exclusions: ExcludedDate[];
@@ -19,7 +20,7 @@ export function ExceptionEditor({ exclusions, minDate, maxDate, onChange }: Prop
     if (existing) {
       onChange(exclusions.map((item) => (item.id === existing.id ? { ...item, reason: reason.trim() } : item)));
     } else {
-      onChange([...exclusions, { id: crypto.randomUUID(), date, reason: reason.trim() }]);
+      onChange([...exclusions, { id: createId("uitzondering"), date, reason: reason.trim() }]);
     }
     setDate("");
     setReason("");

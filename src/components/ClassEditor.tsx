@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Student, Weekday } from "../types";
 import { weekdayLabel } from "../utils/dates";
+import { createId } from "../utils/id";
 
 type Props = {
   students: Student[];
@@ -13,11 +14,11 @@ export function addMissingStudentFields(
   students: Student[],
   total: number,
   weekdays: Weekday[],
-  createId: () => string = () => crypto.randomUUID(),
+  createStudentId: () => string = () => createId("leerling"),
 ): Student[] {
   if (!Number.isInteger(total) || total <= students.length || total > 100) return students;
   const additions = Array.from({ length: total - students.length }, (): Student => ({
-    id: createId(),
+    id: createStudentId(),
     name: "",
     previousYearCount: 0,
     manualOnly: false,
@@ -34,7 +35,7 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
   }, [students.length]);
 
   const newStudent = (name = ""): Student => ({
-    id: crypto.randomUUID(),
+    id: createId("leerling"),
     name,
     previousYearCount: 0,
     manualOnly: false,

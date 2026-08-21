@@ -11,6 +11,15 @@ const existing: Student = {
 };
 
 describe("addMissingStudentFields", () => {
+  it("maakt vanuit een lege klas 25 invulvelden", () => {
+    let nextId = 1;
+    const result = addMissingStudentFields([], 25, [3, 5], () => `leerling-${nextId++}`);
+
+    expect(result).toHaveLength(25);
+    expect(result.every((student) => student.name === "")).toBe(true);
+    expect(new Set(result.map((student) => student.id)).size).toBe(25);
+  });
+
   it("vult tot het gewenste aantal aan en behoudt bestaande leerlingen", () => {
     let nextId = 1;
     const result = addMissingStudentFields([existing], 3, [3, 5], () => `nieuw-${nextId++}`);
