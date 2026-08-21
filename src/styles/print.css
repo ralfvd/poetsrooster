@@ -1,5 +1,5 @@
 @page {
-  size: A4 landscape;
+  size: A4 portrait;
   margin: 6mm;
 }
 
@@ -13,7 +13,7 @@
     padding: 0;
     background: #fff;
     font-family: Arial, sans-serif;
-    font-size: 6.5pt;
+    font-size: 7pt;
   }
 
   .no-print,
@@ -47,7 +47,7 @@
   .app-header .print-period {
     margin: .7mm 0 0;
     color: #000;
-    font-size: 6.5pt;
+    font-size: 7pt;
     line-height: 1;
   }
 
@@ -68,21 +68,21 @@
     min-width: 0;
     table-layout: fixed;
     border-collapse: collapse;
-    font-size: 6.5pt;
+    font-size: 7pt;
     line-height: 1;
   }
 
   .schedule-table thead { display: table-header-group; }
 
   .schedule-table tr {
-    height: 3.15mm;
+    height: 4.7mm;
     break-inside: avoid;
   }
 
   .schedule-table th,
   .schedule-table td {
-    height: 3.15mm;
-    padding: .35mm 1mm;
+    height: 4.7mm;
+    padding: .7mm 1mm;
     border: .2mm solid #555;
     overflow: hidden;
     vertical-align: middle;
@@ -92,14 +92,14 @@
 
   .schedule-table thead th {
     position: static;
-    height: 4mm;
+    height: 5mm;
     background: #e8e8e8 !important;
     color: #000;
     font-weight: bold;
   }
 
-  .schedule-table th:first-child { width: 20mm; }
-  .schedule-table th:last-child { width: 43mm; }
+  .schedule-table th:first-child { width: 19mm; }
+  .schedule-table th:last-child { width: 38mm; }
 
   .schedule-table tbody th {
     background: #fff;
