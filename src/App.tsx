@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ClassEditor } from "./components/ClassEditor";
 import { ExceptionEditor } from "./components/ExceptionEditor";
+import { ParentGuide } from "./components/ParentGuide";
 import { ScheduleSettings } from "./components/ScheduleSettings";
 import { ScheduleTable } from "./components/ScheduleTable";
 import { SchoolExceptionEditor } from "./components/SchoolExceptionEditor";
@@ -303,6 +304,7 @@ export default function App() {
 
       <main className="main-layout">
         <aside className="sidebar no-print">
+          <ParentGuide />
           <ScheduleSettings settings={state.settings} onChange={updateSettings} onGenerate={generate} />
           <SchoolExceptionEditor
             schoolFile={schoolFile}

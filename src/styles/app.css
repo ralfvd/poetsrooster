@@ -63,6 +63,9 @@ table { width: 100%; border-collapse: collapse; }
 .content { display: grid; gap: 1.4rem; min-width: 0; }
 .panel, .schedule-card, .statistics-section { background: var(--paper); border: 1px solid rgb(29 41 39 / 8%); box-shadow: var(--shadow); }
 .panel { padding: 1.25rem; border-radius: 18px; }
+.parent-guide summary { color: var(--brand-dark); font-weight: 800; cursor: pointer; }
+.parent-guide ol { margin: .9rem 0 0; padding-left: 1.2rem; color: var(--muted); font-size: .8rem; line-height: 1.5; }
+.parent-guide li + li { margin-top: .3rem; }
 .section-heading { margin-bottom: 1rem; }
 .row-heading { display: flex; align-items: center; justify-content: space-between; }
 .count-badge { min-width: 2rem; padding: .25rem .55rem; border-radius: 99px; color: var(--brand); background: var(--brand-soft); text-align: center; font-weight: 800; }
