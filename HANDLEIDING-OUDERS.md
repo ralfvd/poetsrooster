@@ -7,5 +7,6 @@
 5. Kies **Poetsdagen genereren** en daarna **Optimale verdeling**.
 6. Controleer het rooster. Via de keuzelijsten kun je namen handmatig aanpassen; zo'n keuze wordt vastgezet en blijft bij opnieuw verdelen staan.
 7. Gebruik bovenaan **PDF downloaden**, **Printen** of **Rooster kopiëren** om het rooster te delen.
+8. Kies bij **Back-up & import** voor **Back-up downloaden** als je het rooster later op een andere computer wilt bewerken. Open daar de website en kies **Back-up importeren**.
 
-De invoer wordt automatisch in deze browser bewaard. Gebruik daarom bij voorkeur steeds hetzelfde apparaat en dezelfde browser.
+De invoer wordt automatisch in deze browser bewaard. Bewaar ook het gedownloade back-upbestand als je van apparaat of browser wilt wisselen.

@@ -70,6 +70,10 @@ De server bewaart de kalender centraal. Iedere gebruiker krijgt de actuele schoo
 
 Met `JSON exporteren` maak je een back-up. Met `JSON importeren` laad je zo'n back-up in de editor; kies daarna nog `Opslaan voor alle klassen` om de geïmporteerde kalender centraal actief te maken.
 
+## Bewerkbaar rooster overzetten
+
+Bij `Back-up & import` kan een gebruiker het volledige poetsrooster downloaden. Dit JSON-bestand bevat de klasinstellingen, leerlingen, klasuitzonderingen en alle automatische en handmatige toewijzingen. Kies op een andere computer `Back-up importeren` om ermee verder te werken. De actuele centrale schoolkalender wordt na het importeren automatisch toegepast.
+
 ## Bijwerken op de server
 
 Na de eerste installatie kan de app vanuit de repositorymap met één commando worden bijgewerkt:

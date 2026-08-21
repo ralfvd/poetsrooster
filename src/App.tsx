@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ClassEditor } from "./components/ClassEditor";
 import { ExceptionEditor } from "./components/ExceptionEditor";
 import { ParentGuide } from "./components/ParentGuide";
+import { RosterBackup } from "./components/RosterBackup";
 import { ScheduleSettings } from "./components/ScheduleSettings";
 import { ScheduleTable } from "./components/ScheduleTable";
 import { SchoolExceptionEditor } from "./components/SchoolExceptionEditor";
@@ -245,6 +246,21 @@ export default function App() {
     setWarnings([]);
   };
 
+  const importRoster = (imported: PersistedState) => {
+    setState({
+      ...imported,
+      schedule: imported.schedule.length
+        ? generateSchedule(
+            imported.settings,
+            mergeExclusions(schoolFile.exceptions, imported.excludedDates),
+            imported.schedule,
+          )
+        : [],
+    });
+    setWarnings([]);
+    setExportMessage("");
+  };
+
   const copySchedule = async () => {
     try {
       await copyScheduleToClipboard(state.schedule, state.students, state.settings.cleaningWeekdays);
@@ -326,6 +342,7 @@ export default function App() {
             maxDate={state.settings.endDate}
             onChange={updateExclusions}
           />
+          <RosterBackup state={state} onImport={importRoster} />
           <button className="reset-button" type="button" onClick={reset}>Alles wissen / reset</button>
         </aside>
 

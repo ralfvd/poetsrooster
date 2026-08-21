@@ -50,6 +50,13 @@ export type PersistedState = {
   schedule: ScheduleDay[];
 };
 
+export type RosterBackupFile = {
+  format: "poetsrooster-backup";
+  version: 1;
+  exportedAt: string;
+  state: PersistedState;
+};
+
 export type OptimizerResult = {
   schedule: ScheduleDay[];
   warnings: string[];
