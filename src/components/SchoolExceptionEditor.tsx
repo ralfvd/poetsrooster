@@ -93,7 +93,7 @@ export function SchoolExceptionEditor({ schoolFile, loadError, minDate, maxDate,
             onChange={(event) => {
               const value = event.target.value;
               setStartDate(value);
-              if (!endDate || endDate < value) setEndDate(value);
+              setEndDate(value);
             }}
           />
         </label>
