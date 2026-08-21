@@ -113,6 +113,7 @@ export function SchoolExceptionEditor({ schoolFile, loadError, minDate, maxDate,
           autoComplete="current-password"
           onChange={(event) => setPassword(event.target.value)}
         />
+        <span className="field-help">De beheerder stelt dit wachtwoord in via het bestand <code>.env</code> op de server.</span>
       </label>
       <button className="button primary full-width" type="button" disabled={busy} onClick={() => void save()}>
         {busy ? "Opslaan…" : "Opslaan voor alle klassen"}

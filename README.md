@@ -2,7 +2,10 @@
 
 Een lokale React-app waarmee klassenouders een eerlijk poetsrooster maken. Gegevens blijven in de browser via `localStorage`.
 
-Voor dagelijks gebruik: [korte handleiding voor ouders](HANDLEIDING-OUDERS.md).
+Handleidingen:
+
+- [korte handleiding voor ouders](HANDLEIDING-OUDERS.md);
+- [installatie- en beheerhandleiding](HANDLEIDING-BEHEERDERS.md).
 
 Per leerling kan `Handmatig` worden aangevinkt. De automatische verdeling slaat deze leerling altijd over; handmatig kan de leerling zo vaak als nodig in het rooster worden geplaatst.
 
