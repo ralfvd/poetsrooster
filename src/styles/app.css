@@ -145,6 +145,20 @@ table { width: 100%; border-collapse: collapse; }
 .statistics-table thead th { color: var(--muted); font-size: .72rem; text-transform: uppercase; }
 .statistics-table tbody tr:last-child th, .statistics-table tbody tr:last-child td { border-bottom: 0; }
 .loading { display: grid; place-items: center; min-height: 100vh; color: var(--brand); font-weight: 800; }
+.version-badge {
+  position: fixed;
+  right: .6rem;
+  bottom: .5rem;
+  z-index: 10;
+  padding: .28rem .48rem;
+  border: 1px solid rgb(29 41 39 / 10%);
+  border-radius: 6px;
+  color: var(--muted);
+  background: rgb(255 253 248 / 92%);
+  box-shadow: 0 2px 8px rgb(29 41 39 / 8%);
+  font-size: .65rem;
+  font-weight: 700;
+}
 
 @media (max-width: 1100px) {
   .app-shell { padding: 1rem; }

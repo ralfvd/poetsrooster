@@ -361,6 +361,9 @@ export default function App() {
           <Statistics students={state.students} schedule={state.schedule} weekdays={state.settings.cleaningWeekdays} />
         </div>
       </main>
+      <div className="version-badge no-print" title="Git-revisie">
+        {__APP_REVISION__}
+      </div>
     </div>
   );
 }

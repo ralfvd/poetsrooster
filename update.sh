@@ -41,6 +41,7 @@ git fetch origin "$BRANCH"
 git merge --ff-only "origin/$BRANCH"
 
 NEW_REVISION="$(git rev-parse --short HEAD)"
+export APP_REVISION="$NEW_REVISION"
 log "Docker-image bouwen ($OLD_REVISION → $NEW_REVISION)"
 docker compose build --pull
 

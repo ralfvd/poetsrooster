@@ -53,6 +53,8 @@ Voer vanuit de repositorymap uit:
 
 Dit haalt de nieuwste versie op, bouwt de app opnieuw en controleert of deze bereikbaar is. De centrale schoolkalender staat in het permanente Docker-volume `poetsrooster-data` en blijft bij updates bestaan.
 
+Rechtsonder in de app staat de korte Git-revisie, bijvoorbeeld `76ac6c7`. Deze moet overeenkomen met de versie die `update.sh` na een geslaagde update meldt.
+
 ## Snelle controles
 
 ```bash

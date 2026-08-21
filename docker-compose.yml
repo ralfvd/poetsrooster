@@ -1,6 +1,9 @@
 services:
   poetsrooster:
-    build: .
+    build:
+      context: .
+      args:
+        APP_REVISION: ${APP_REVISION:-container}
     ports:
       - "8080:3000"
     environment:
