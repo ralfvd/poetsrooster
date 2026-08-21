@@ -1,6 +1,7 @@
 import type { jsPDF } from "jspdf";
 import type { ScheduleDay, ScheduleSettings, Student, Weekday } from "../types";
 import { formatDate, formatLongDate, weekdayLabel } from "../utils/dates";
+import { formatExclusionNotes } from "../utils/exclusions";
 import { groupScheduleByWeek } from "../utils/schedule";
 
 type ExportRow = {
@@ -36,13 +37,7 @@ function exportRows(
               .map((assignment) => assignment.studentId ? studentsById.get(assignment.studentId) ?? "--" : "--")
               .join(", ");
     }
-    const excludedDays = [...days.values()].filter((day) => day.excluded);
-    const reasons = [...new Set(excludedDays.map((day) => day.exclusionReason ?? "Uitgesloten"))];
-    const notes = excludedDays.length > 1 && reasons.length === 1
-      ? reasons[0]
-      : excludedDays
-          .map((day) => `${weekdayLabel(day.weekday)}: ${day.exclusionReason ?? "Uitgesloten"}`)
-          .join("; ");
+    const notes = formatExclusionNotes(days.values(), "; ");
     return { weekStart, days: values, notes };
   });
 }

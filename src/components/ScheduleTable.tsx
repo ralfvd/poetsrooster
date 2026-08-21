@@ -1,5 +1,6 @@
 import type { ScheduleDay, Student, Weekday } from "../types";
 import { formatDate, weekdayLabel } from "../utils/dates";
+import { formatExclusionNotes } from "../utils/exclusions";
 import { groupScheduleByWeek } from "../utils/schedule";
 
 type Props = {
@@ -76,10 +77,7 @@ export function ScheduleTable({ schedule, students, weekdays, onAssign, onUnlock
                 );
               })}
               <td className="notes-cell">
-                {[...days.values()]
-                  .filter((day) => day.excluded)
-                  .map((day) => `${weekdayLabel(day.weekday)}: ${day.exclusionReason}`)
-                  .join(" · ")}
+                {formatExclusionNotes(days.values())}
               </td>
             </tr>
           ))}
