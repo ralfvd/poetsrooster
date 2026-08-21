@@ -1,36 +1,123 @@
-@page { size: A4 landscape; margin: 10mm; }
+@page {
+  size: A4 landscape;
+  margin: 6mm;
+}
 
 @media print {
   :root { color: #000; background: #fff; }
-  body { background: #fff; font-family: Arial, sans-serif; font-size: 9pt; }
-  .no-print { display: none !important; }
-  .app-shell { max-width: none; padding: 0; }
-  .app-header { display: block; padding: 0 0 5mm; border-bottom: 2px solid #000; }
-  .app-header h1 { margin: 0; font: bold 18pt Arial, sans-serif; }
-  .app-header .eyebrow, .brand-mark { display: none; }
-  .app-header .print-period { margin: 1mm 0 0; color: #000; font-size: 9pt; }
-  .main-layout { display: block; }
+
+  html,
+  body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 6.5pt;
+  }
+
+  .no-print,
+  .statistics-section {
+    display: none !important;
+  }
+
+  .print-only { display: inline !important; }
+
+  .app-shell {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .app-header {
+    display: block;
+    padding: 0 0 2mm;
+    border-bottom: 1px solid #000;
+  }
+
+  .app-header h1 {
+    margin: 0;
+    font: bold 12pt/1 Arial, sans-serif;
+  }
+
+  .app-header .eyebrow,
+  .brand-mark { display: none; }
+
+  .app-header .print-period {
+    margin: .7mm 0 0;
+    color: #000;
+    font-size: 6.5pt;
+    line-height: 1;
+  }
+
+  .main-layout,
   .content { display: block; }
-  .schedule-card, .statistics-section { border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
-  .schedule-scroll, .stats-scroll { overflow: visible; }
-  table { width: 100%; border-collapse: collapse; }
-  thead { display: table-header-group; }
-  tr { break-inside: avoid; }
-  .schedule-table { min-width: 0; font-size: 8pt; }
-  .schedule-table th, .schedule-table td { padding: 2mm; border: 1px solid #555; }
-  .schedule-table thead th { position: static; background: #e8e8e8 !important; color: #000; font-weight: bold; }
-  .schedule-table tbody th { width: 25mm; background: #fff; color: #000; }
-  .assignment { display: block; min-width: 0; }
-  .assignment select { appearance: none; border: 0; padding: 0; min-width: 0; color: #000; background: transparent; font-size: 8pt; }
-  .assignment select option { color: #000; }
-  .lock-button { display: none; }
-  .excluded-cell, .muted-cell { background: #fff !important; color: #000; }
-  .notes-cell { min-width: 35mm; color: #000; }
-  .statistics-section { margin-top: 7mm; padding: 0; break-before: auto; }
-  .statistics-section .section-heading { margin-bottom: 2mm; }
-  .statistics-section .eyebrow { display: none; }
-  .statistics-section h2 { font: bold 12pt Arial, sans-serif; }
-  .statistics-table { min-width: 0; font-size: 8pt; }
-  .statistics-table th, .statistics-table td { padding: 1.5mm 2mm; border: 1px solid #777; }
-  .statistics-table thead th { color: #000; background: #e8e8e8 !important; }
+
+  .schedule-card {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .schedule-scroll { overflow: visible; }
+
+  .schedule-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 6.5pt;
+    line-height: 1;
+  }
+
+  .schedule-table thead { display: table-header-group; }
+
+  .schedule-table tr {
+    height: 3.15mm;
+    break-inside: avoid;
+  }
+
+  .schedule-table th,
+  .schedule-table td {
+    height: 3.15mm;
+    padding: .35mm 1mm;
+    border: .2mm solid #555;
+    overflow: hidden;
+    vertical-align: middle;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .schedule-table thead th {
+    position: static;
+    height: 4mm;
+    background: #e8e8e8 !important;
+    color: #000;
+    font-weight: bold;
+  }
+
+  .schedule-table th:first-child { width: 20mm; }
+  .schedule-table th:last-child { width: 43mm; }
+
+  .schedule-table tbody th {
+    background: #fff;
+    color: #000;
+    font-weight: normal;
+  }
+
+  .print-assignment-names { color: #000; }
+
+  .excluded-cell,
+  .muted-cell {
+    background: #fff !important;
+    color: #000;
+    text-align: center !important;
+  }
+
+  .notes-cell {
+    min-width: 0;
+    color: #000;
+  }
 }

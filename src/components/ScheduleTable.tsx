@@ -38,7 +38,7 @@ export function ScheduleTable({ schedule, students, weekdays, onAssign, onUnlock
                 if (day.excluded) return <td key={weekday} className="excluded-cell">--</td>;
                 return (
                   <td key={weekday}>
-                    <div className="assignment-stack">
+                    <div className="assignment-stack no-print">
                       {day.assignments.map((assignment, slot) => (
                         <div className={`assignment ${assignment.locked ? "is-locked" : ""}`} key={slot}>
                           <select
@@ -65,6 +65,13 @@ export function ScheduleTable({ schedule, students, weekdays, onAssign, onUnlock
                         </div>
                       ))}
                     </div>
+                    <span className="print-only print-assignment-names">
+                      {day.assignments
+                        .map((assignment) =>
+                          students.find((student) => student.id === assignment.studentId)?.name || "--",
+                        )
+                        .join(", ")}
+                    </span>
                   </td>
                 );
               })}

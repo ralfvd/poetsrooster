@@ -44,6 +44,7 @@ h1 { margin-bottom: .15rem; font-size: clamp(2rem, 4vw, 3.15rem); line-height: 1
 h2 { margin-bottom: 0; font-size: 1.55rem; }
 table { width: 100%; border-collapse: collapse; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.print-only { display: none; }
 
 .app-shell { max-width: 1760px; margin: 0 auto; padding: 2rem; }
 .app-header { display: flex; align-items: center; gap: 1rem; padding: .6rem .5rem 2rem; }
