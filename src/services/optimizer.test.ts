@@ -13,6 +13,7 @@ function students(count: number, availableWeekdays: Weekday[] = [3, 5]): Student
     id: `student-${index + 1}`,
     name: `Kind ${index + 1}`,
     previousYearCount: 3,
+    manualOnly: false,
     availableWeekdays,
   }));
 }
@@ -119,5 +120,28 @@ describe("optimizeSchedule", () => {
       const ids = day.assignments.map((item) => item.studentId);
       expect(new Set(ids).size).toBe(ids.length);
     });
+  });
+
+  it("plant handmatige leerlingen nooit automatisch in", () => {
+    const roster = students(8);
+    roster[0].manualOnly = true;
+    roster[1].manualOnly = true;
+    const result = optimizeSchedule(roster, days(30));
+    const totals = counts(result.schedule, roster);
+    expect(totals.get(roster[0].id)).toBe(0);
+    expect(totals.get(roster[1].id)).toBe(0);
+    expect(result.schedule.flatMap((day) => day.assignments).filter((item) => item.studentId)).toHaveLength(30);
+  });
+
+  it("behoudt meerdere handmatige beurten zonder er automatisch toe te voegen", () => {
+    const roster = students(5);
+    roster[0].manualOnly = true;
+    const schedule = days(15);
+    schedule[5].assignments[0] = assignment(roster[0].id, true);
+    schedule[7].assignments[0] = assignment(roster[0].id, true);
+    const result = optimizeSchedule(roster, schedule);
+    expect(counts(result.schedule, roster).get(roster[0].id)).toBe(2);
+    expect(result.schedule[5].assignments[0]).toEqual(assignment(roster[0].id, true));
+    expect(result.schedule[7].assignments[0]).toEqual(assignment(roster[0].id, true));
   });
 });

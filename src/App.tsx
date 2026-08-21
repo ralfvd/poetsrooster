@@ -87,7 +87,9 @@ export default function App() {
     const names = state.students.map((student) => student.name.trim().toLocaleLowerCase("nl")).filter(Boolean);
     if (new Set(names).size !== names.length) issues.push("Iedere leerling moet een unieke naam hebben.");
     const unavailable = state.students.filter(
-      (student) => !student.availableWeekdays.some((day) => state.settings.cleaningWeekdays.includes(day)),
+      (student) =>
+        !student.manualOnly &&
+        !student.availableWeekdays.some((day) => state.settings.cleaningWeekdays.includes(day)),
     );
     if (unavailable.length) issues.push(`${unavailable.length} leerling(en) zijn op geen enkele poetsdag beschikbaar.`);
     return issues;

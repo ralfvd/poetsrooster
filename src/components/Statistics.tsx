@@ -16,7 +16,7 @@ export function Statistics({ students, schedule, weekdays }: Props) {
         <table className="statistics-table">
           <thead>
             <tr>
-              <th>Kind</th><th>Vorig jaar</th><th>Dit jaar</th><th>Totaal</th>
+              <th>Kind</th><th>Handmatig</th><th>Vorig jaar</th><th>Dit jaar</th><th>Totaal</th>
               {weekdays.map((weekday) => <th key={weekday}>{weekdayLabel(weekday).slice(0, 2)}</th>)}
             </tr>
           </thead>
@@ -24,6 +24,7 @@ export function Statistics({ students, schedule, weekdays }: Props) {
             {statistics.map((stat) => (
               <tr key={stat.student.id}>
                 <th scope="row">{stat.student.name || "Naamloos"}</th>
+                <td>{stat.student.manualOnly ? "Ja" : "—"}</td>
                 <td>{stat.student.previousYearCount}</td>
                 <td><strong>{stat.currentYearCount}</strong></td>
                 <td>{stat.totalCount}</td>

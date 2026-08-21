@@ -16,6 +16,7 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
         id: crypto.randomUUID(),
         name: `Leerling ${students.length + 1}`,
         previousYearCount: 0,
+        manualOnly: false,
         availableWeekdays: [...weekdays],
       },
     ]);
@@ -47,6 +48,7 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
             <tr>
               <th>Naam</th>
               <th className="number-column">Vorig jaar</th>
+              <th className="check-column" title="Deze leerling wordt nooit automatisch ingepland">Handmatig</th>
               {weekdays.map((weekday) => (
                 <th className="check-column" key={weekday} title={weekdayLabel(weekday)}>
                   {weekdayLabel(weekday).slice(0, 2)}
@@ -76,6 +78,15 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
                     }
                   />
                 </td>
+                <td className="check-cell">
+                  <input
+                    aria-label={`${student.name} alleen handmatig inplannen`}
+                    title="Niet meenemen in de automatische verdeling"
+                    type="checkbox"
+                    checked={student.manualOnly}
+                    onChange={(event) => updateStudent(student.id, { manualOnly: event.target.checked })}
+                  />
+                </td>
                 {weekdays.map((weekday) => (
                   <td className="check-cell" key={weekday}>
                     <input
@@ -103,6 +114,7 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
         </table>
       </div>
       {students.length === 0 && <p className="empty-copy">Voeg de leerlingen toe om te beginnen.</p>}
+      <p className="table-help"><strong>Handmatig</strong> betekent: nooit meenemen in de automatische verdeling. Je kunt deze leerling zelf zo vaak als nodig inplannen.</p>
       <button className="button ghost full-width" type="button" onClick={addStudent}>
         + Kind toevoegen
       </button>

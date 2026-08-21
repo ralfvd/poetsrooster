@@ -12,8 +12,8 @@ const settings: ScheduleSettings = {
 };
 
 const students: Student[] = [
-  { id: "anna", name: "Anna", previousYearCount: 2, availableWeekdays: [3, 5] },
-  { id: "bram", name: "Bram", previousYearCount: 3, availableWeekdays: [3, 5] },
+  { id: "anna", name: "Anna", previousYearCount: 2, manualOnly: false, availableWeekdays: [3, 5] },
+  { id: "bram", name: "Bram", previousYearCount: 3, manualOnly: false, availableWeekdays: [3, 5] },
 ];
 
 function filledSchedule() {

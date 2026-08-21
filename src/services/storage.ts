@@ -14,7 +14,19 @@ export class LocalStorageProvider implements StorageProvider {
     if (!raw) return null;
     try {
       const parsed = JSON.parse(raw) as PersistedState;
-      return parsed.version === 1 ? parsed : null;
+      return parsed.version === 1
+        ? {
+            ...parsed,
+            students: parsed.students.map((student) => {
+              const legacyStudent = student as typeof student & { oneTimeOnly?: boolean };
+              const { oneTimeOnly, ...currentStudent } = legacyStudent;
+              return {
+                ...currentStudent,
+                manualOnly: Boolean(currentStudent.manualOnly ?? oneTimeOnly),
+              };
+            }),
+          }
+        : null;
     } catch {
       return null;
     }

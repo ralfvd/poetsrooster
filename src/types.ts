@@ -4,6 +4,7 @@ export type Student = {
   id: string;
   name: string;
   previousYearCount: number;
+  manualOnly: boolean;
   availableWeekdays: Weekday[];
 };
 

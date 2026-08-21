@@ -63,7 +63,9 @@ export function optimizeSchedule(students: Student[], input: ScheduleDay[]): Opt
     if (day.excluded) return;
     day.assignments.forEach((assignment, assignmentIndex) => {
       if (assignment.locked) return;
-      const candidateCount = students.filter((student) => student.availableWeekdays.includes(day.weekday)).length;
+      const candidateCount = students.filter(
+        (student) => !student.manualOnly && student.availableWeekdays.includes(day.weekday),
+      ).length;
       slots.push({ dayIndex, assignmentIndex, candidateCount, date: day.date });
     });
   });
@@ -75,7 +77,10 @@ export function optimizeSchedule(students: Student[], input: ScheduleDay[]): Opt
       day.assignments.map((assignment) => assignment.studentId).filter((id): id is string => Boolean(id)),
     );
     const candidates = students.filter(
-      (student) => student.availableWeekdays.includes(day.weekday) && !alreadyAssigned.has(student.id),
+      (student) =>
+        !student.manualOnly &&
+        student.availableWeekdays.includes(day.weekday) &&
+        !alreadyAssigned.has(student.id),
     );
     candidates.sort((a, b) => {
       const aState = state.get(a.id)!;
@@ -111,7 +116,9 @@ export function optimizeSchedule(students: Student[], input: ScheduleDay[]): Opt
     selectedState.weekdayCounts[day.weekday] = (selectedState.weekdayCounts[day.weekday] ?? 0) + 1;
   }
 
-  const counts = [...state.values()].map((item) => item.count);
+  const counts = students
+    .filter((student) => !student.manualOnly)
+    .map((student) => state.get(student.id)!.count);
   if (counts.length > 1 && Math.max(...counts) - Math.min(...counts) > 1) {
     warnings.unshift("De verdeling is niet volledig gelijk door beschikbaarheid of vastgezette toewijzingen.");
   }

@@ -93,6 +93,7 @@ table { width: 100%; border-collapse: collapse; }
 .icon-button:hover { background: #f4e3df; }
 .icon-button.danger { color: var(--danger); }
 .empty-copy { margin: .2rem 0 1rem; color: var(--muted); font-size: .88rem; }
+.table-help { margin: .65rem 0 .85rem; color: var(--muted); font-size: .72rem; line-height: 1.4; }
 .exception-list { display: grid; gap: .4rem; padding: .8rem 0 0; margin: .7rem 0 0; border-top: 1px solid var(--line); list-style: none; }
 .exception-list li { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .8rem; }
 .exception-list strong { margin-right: .25rem; }
