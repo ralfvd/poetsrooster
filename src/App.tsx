@@ -5,6 +5,7 @@ import { ScheduleSettings } from "./components/ScheduleSettings";
 import { ScheduleTable } from "./components/ScheduleTable";
 import { Statistics } from "./components/Statistics";
 import { WarningPanel } from "./components/WarningPanel";
+import { copyScheduleToClipboard, downloadSchedulePdf } from "./services/export";
 import { optimizeSchedule } from "./services/optimizer";
 import { LocalStorageProvider } from "./services/storage";
 import type { ExcludedDate, PersistedState, ScheduleSettings as Settings, Student } from "./types";
@@ -29,6 +30,7 @@ const defaultState: PersistedState = {
 export default function App() {
   const [state, setState] = useState<PersistedState>(defaultState);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [exportMessage, setExportMessage] = useState("");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -181,6 +183,27 @@ export default function App() {
     setWarnings([]);
   };
 
+  const copySchedule = async () => {
+    try {
+      await copyScheduleToClipboard(state.schedule, state.students, state.settings.cleaningWeekdays);
+      setExportMessage("Rooster gekopieerd");
+    } catch {
+      setExportMessage("Kopiëren mislukt");
+    }
+    window.setTimeout(() => setExportMessage(""), 2500);
+  };
+
+  const downloadPdf = async () => {
+    setExportMessage("PDF maken…");
+    try {
+      await downloadSchedulePdf(state.settings, state.schedule, state.students);
+      setExportMessage("PDF gedownload");
+    } catch {
+      setExportMessage("PDF maken mislukt");
+    }
+    window.setTimeout(() => setExportMessage(""), 2500);
+  };
+
   if (!ready) return <div className="loading">Rooster laden…</div>;
 
   return (
@@ -192,7 +215,26 @@ export default function App() {
           <h1>{state.settings.className || "Poetsrooster"}</h1>
           <p className="print-period">{periodLabel}</p>
         </div>
-        <button className="button ghost no-print" type="button" onClick={() => window.print()}>Printen</button>
+        <div className="header-actions no-print">
+          {exportMessage && <span className="export-status" role="status">{exportMessage}</span>}
+          <button
+            className="button ghost"
+            type="button"
+            disabled={state.schedule.length === 0}
+            onClick={() => void copySchedule()}
+          >
+            Rooster kopiëren
+          </button>
+          <button
+            className="button ghost"
+            type="button"
+            disabled={state.schedule.length === 0}
+            onClick={() => void downloadPdf()}
+          >
+            PDF downloaden
+          </button>
+          <button className="button ghost" type="button" onClick={() => window.print()}>Printen</button>
+        </div>
       </header>
 
       <main className="main-layout">
