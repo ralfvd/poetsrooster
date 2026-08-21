@@ -1,5 +1,5 @@
-import type { OptimizerResult, ScheduleDay, Student } from "../types";
-import { daysBetween, weekdayLabel } from "../utils/dates";
+import type { OptimizerResult, ScheduleDay, Student, Weekday } from "../types";
+import { daysBetween, startOfWeek, weekdayLabel } from "../utils/dates";
 
 type CandidateState = {
   count: number;
@@ -40,7 +40,50 @@ export function effectivePreviousYearCounts(students: Student[]): Map<string, nu
   ]));
 }
 
-export function optimizeSchedule(students: Student[], input: ScheduleDay[]): OptimizerResult {
+function preferredWeekdays(
+  students: Student[],
+  schedule: ScheduleDay[],
+  state: Map<string, CandidateState>,
+  seed: number,
+): Map<string, Weekday> {
+  const demand = new Map<Weekday, number>();
+  for (const day of schedule) {
+    if (!day.excluded) demand.set(day.weekday, (demand.get(day.weekday) ?? 0) + day.assignments.length);
+  }
+  const preferenceLoad = new Map<Weekday, number>();
+  const result = new Map<string, Weekday>();
+  const candidates = students
+    .filter((student) => !student.manualOnly)
+    .sort((a, b) =>
+      a.availableWeekdays.length - b.availableWeekdays.length ||
+      hash(`${seed}:student:${a.id}`) - hash(`${seed}:student:${b.id}`),
+    );
+
+  for (const student of candidates) {
+    const available = student.availableWeekdays.filter((weekday) => (demand.get(weekday) ?? 0) > 0);
+    if (!available.length) continue;
+    const lockedCounts = state.get(student.id)?.weekdayCounts ?? {};
+    const highestLockedCount = Math.max(0, ...available.map((weekday) => lockedCounts[weekday] ?? 0));
+    const preferred = [...available].sort((a, b) => {
+      if (highestLockedCount > 0) {
+        const lockedDifference = (lockedCounts[b] ?? 0) - (lockedCounts[a] ?? 0);
+        if (lockedDifference) return lockedDifference;
+      }
+      const aLoad = (preferenceLoad.get(a) ?? 0) / (demand.get(a) ?? 1);
+      const bLoad = (preferenceLoad.get(b) ?? 0) / (demand.get(b) ?? 1);
+      return aLoad - bLoad || hash(`${seed}:weekday:${student.id}:${a}`) - hash(`${seed}:weekday:${student.id}:${b}`);
+    })[0];
+    result.set(student.id, preferred);
+    preferenceLoad.set(preferred, (preferenceLoad.get(preferred) ?? 0) + 1);
+  }
+  return result;
+}
+
+export function optimizeSchedule(
+  students: Student[],
+  input: ScheduleDay[],
+  seed = Math.floor(Math.random() * 4_294_967_296),
+): OptimizerResult {
   const schedule = cloneSchedule(input);
   const validStudents = new Map(students.map((student) => [student.id, student]));
   const state = new Map<string, CandidateState>(
@@ -85,7 +128,13 @@ export function optimizeSchedule(students: Student[], input: ScheduleDay[]): Opt
       slots.push({ dayIndex, assignmentIndex, candidateCount, date: day.date });
     });
   });
-  slots.sort((a, b) => a.candidateCount - b.candidateCount || a.date.localeCompare(b.date));
+  slots.sort((a, b) =>
+    a.candidateCount - b.candidateCount ||
+    hash(`${seed}:week:${startOfWeek(a.date)}`) - hash(`${seed}:week:${startOfWeek(b.date)}`) ||
+    a.date.localeCompare(b.date) ||
+    a.assignmentIndex - b.assignmentIndex,
+  );
+  const preferredByStudent = preferredWeekdays(students, schedule, state, seed);
 
   for (const slot of slots) {
     const day = schedule[slot.dayIndex];
@@ -110,9 +159,10 @@ export function optimizeSchedule(students: Student[], input: ScheduleDay[]): Opt
       return (
         aState.count - bState.count ||
         previousYearCounts.get(a.id)! + aState.count - (previousYearCounts.get(b.id)! + bState.count) ||
+        Number(preferredByStudent.get(a.id) !== day.weekday) - Number(preferredByStudent.get(b.id) !== day.weekday) ||
         bDistance - aDistance ||
-        (aState.weekdayCounts[day.weekday] ?? 0) - (bState.weekdayCounts[day.weekday] ?? 0) ||
-        hash(`${day.date}:${slot.assignmentIndex}:${a.id}`) - hash(`${day.date}:${slot.assignmentIndex}:${b.id}`)
+        (bState.weekdayCounts[day.weekday] ?? 0) - (aState.weekdayCounts[day.weekday] ?? 0) ||
+        hash(`${seed}:${day.date}:${slot.assignmentIndex}:${a.id}`) - hash(`${seed}:${day.date}:${slot.assignmentIndex}:${b.id}`)
       );
     });
 

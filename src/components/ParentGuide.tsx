@@ -7,6 +7,7 @@ export function ParentGuide() {
         <li>Kies <strong>Poetsdagen genereren</strong> om het lege rooster te maken.</li>
         <li>
           Maak bij <strong>Leerlingen</strong> de invulvelden en vul de leerlingnamen in. De naam is het unieke herkenningspunt voor de ouder(s)/verzorger(s) die poetsen.
+          De verdeling probeert per leerling zo veel mogelijk dezelfde weekdag aan te houden.
           Een <strong>0 bij vorig jaar</strong> betekent nieuw in de klas en telt voor de verdeling als het gemiddelde van de andere tellingen.
         </li>
         <li>Voeg zo nodig bij <strong>Klasuitzonderingen</strong> een vrije dag voor alleen deze klas toe, bijvoorbeeld een schoolreisje.</li>

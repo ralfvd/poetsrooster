@@ -187,6 +187,7 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
       </div>
       {students.length === 0 && <p className="empty-copy">Voeg de leerlingen toe om te beginnen.</p>}
       <p className="table-help">De <strong>naam van de leerling</strong> is het unieke herkenningspunt in het rooster. De beschikbaarheid en poetsbeurten horen bij de ouder(s)/verzorger(s) van die leerling.</p>
+      <p className="table-help">Vink alleen de dagen aan waarop zij kunnen poetsen. Bij meerdere dagen probeert de verdeling per leerling zo veel mogelijk één vaste weekdag aan te houden.</p>
       <p className="table-help"><strong>Vorig jaar 0</strong> wordt bij iemand die nieuw is voor de verdeling behandeld als het gemiddelde van de anderen.</p>
       <p className="table-help"><strong>Handmatig</strong> betekent: nooit meenemen in de automatische verdeling. De weekdagen worden uitgevinkt; je kunt deze leerling zelf zo vaak als nodig inplannen.</p>
       <button className="button ghost full-width" type="button" onClick={addStudent}>

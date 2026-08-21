@@ -26,6 +26,17 @@ function days(count: number, capacity = 1, weekdays: Weekday[] = [3, 5]): Schedu
   });
 }
 
+function weeklyDays(weeks: number): ScheduleDay[] {
+  return Array.from({ length: weeks }, (_, week) => {
+    const wednesday = new Date(Date.UTC(2026, 0, 7 + week * 7));
+    const friday = new Date(Date.UTC(2026, 0, 9 + week * 7));
+    return [
+      { date: wednesday.toISOString().slice(0, 10), weekday: 3 as const, excluded: false, assignments: [assignment()] },
+      { date: friday.toISOString().slice(0, 10), weekday: 5 as const, excluded: false, assignments: [assignment()] },
+    ];
+  }).flat();
+}
+
 function counts(schedule: ScheduleDay[], roster: Student[]): Map<string, number> {
   const result = new Map(roster.map((student) => [student.id, 0]));
   schedule.forEach((day) => day.assignments.forEach((item) => {
@@ -83,6 +94,30 @@ describe("optimizeSchedule", () => {
       return selected?.availableWeekdays.includes(day.weekday);
     })).toBe(true);
     expect(result.warnings).toEqual([]);
+  });
+
+  it("varieert de verdeling over de weken zonder de eindtelling oneerlijk te maken", () => {
+    const roster = students(8);
+    const first = optimizeSchedule(roster, weeklyDays(24), 101);
+    const second = optimizeSchedule(roster, weeklyDays(24), 202);
+    const firstSequence = first.schedule.map((day) => day.assignments[0].studentId);
+    const secondSequence = second.schedule.map((day) => day.assignments[0].studentId);
+    expect(firstSequence).not.toEqual(secondSequence);
+    for (const result of [first, second]) {
+      const values = [...counts(result.schedule, roster).values()];
+      expect(Math.max(...values) - Math.min(...values)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("houdt bij flexibele beschikbaarheid zo veel mogelijk één vaste weekdag aan", () => {
+    const roster = students(8);
+    const result = optimizeSchedule(roster, weeklyDays(32), 303);
+    const weekdaysByStudent = new Map(roster.map((student) => [student.id, new Set<Weekday>()]));
+    result.schedule.forEach((day) => {
+      const studentId = day.assignments[0].studentId;
+      if (studentId) weekdaysByStudent.get(studentId)?.add(day.weekday);
+    });
+    expect([...weekdaysByStudent.values()].every((assignedWeekdays) => assignedWeekdays.size === 1)).toBe(true);
   });
 
   it("laat handmatig vastgezette toewijzingen exact staan", () => {
