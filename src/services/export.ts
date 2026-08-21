@@ -135,7 +135,7 @@ export async function createSchedulePdf(
     14,
   );
 
-  const drawRow = (values: string[], y: number, height: number, header = false) => {
+  const drawRow = (values: string[], y: number, height: number, header = false, shaded = false) => {
     let x = margin;
     doc.setFont("helvetica", header ? "bold" : "normal");
     doc.setFontSize(header ? 7 : Math.max(4.5, Math.min(7, rowHeight * 1.35)));
@@ -143,6 +143,9 @@ export async function createSchedulePdf(
       const width = columns[index];
       if (header) {
         doc.setFillColor(232, 232, 232);
+        doc.rect(x, y, width, height, "FD");
+      } else if (shaded) {
+        doc.setFillColor(244, 244, 244);
         doc.rect(x, y, width, height, "FD");
       } else {
         doc.rect(x, y, width, height, "S");
@@ -170,6 +173,8 @@ export async function createSchedulePdf(
       ],
       tableTop + headerHeight + index * rowHeight,
       rowHeight,
+      false,
+      index % 2 === 1,
     );
   });
 
