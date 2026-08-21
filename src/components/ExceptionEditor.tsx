@@ -39,7 +39,7 @@ export function ExceptionEditor({ exclusions, minDate, maxDate, onChange }: Prop
         </label>
         <label>
           Reden
-          <input value={reason} placeholder="Bijv. herfstvakantie" onChange={(event) => setReason(event.target.value)} />
+          <input value={reason} placeholder="Bijv. schoolreisje" onChange={(event) => setReason(event.target.value)} />
         </label>
         <button className="button ghost" type="button" onClick={addException} disabled={!date || !reason.trim()}>
           Klasdag toevoegen

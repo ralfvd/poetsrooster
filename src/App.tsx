@@ -322,17 +322,17 @@ export default function App() {
         <aside className="sidebar no-print">
           <ParentGuide />
           <ScheduleSettings settings={state.settings} onChange={updateSettings} onGenerate={generate} />
-          <ExceptionEditor
-            exclusions={state.excludedDates}
-            minDate={state.settings.startDate}
-            maxDate={state.settings.endDate}
-            onChange={updateExclusions}
-          />
           <ClassEditor
             students={state.students}
             weekdays={state.settings.cleaningWeekdays}
             onChange={updateStudents}
             onRemove={removeStudent}
+          />
+          <ExceptionEditor
+            exclusions={state.excludedDates}
+            minDate={state.settings.startDate}
+            maxDate={state.settings.endDate}
+            onChange={updateExclusions}
           />
           <RosterBackup state={state} onImport={importRoster} />
           <button className="reset-button" type="button" onClick={reset}>Alles wissen / reset</button>
