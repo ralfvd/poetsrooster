@@ -64,7 +64,7 @@ export function ScheduleSettings({ settings, onChange, onGenerate }: Props) {
         </div>
       </fieldset>
       <label>
-        Leerlingen per poetsdag
+        Ouders/verzorgers per poetsdag
         <input
           type="number"
           min="1"
