@@ -43,9 +43,9 @@ Als `ACCESS_PASSWORD` wordt gewijzigd, worden bestaande cookies en de oude uniek
 
 ## Schoolbrede vrije dagen beheren
 
-1. Open in de app het onderdeel **Schoolkalender**.
-2. Vul **Van**, **Tot en met** en een reden in, bijvoorbeeld een studiedag of vakantie. Gebruik voor één losse dag tweemaal dezelfde datum.
-3. Vul het schoolbeheerwachtwoord uit `.env` in.
+1. Klap onderaan de zijbalk **Schoolkalender voor iedereen** open.
+2. Vul het schoolbeheerwachtwoord uit `.env` in en kies **Schoolkalender ontgrendelen**.
+3. Vul **Van**, **Tot en met** en een reden in, bijvoorbeeld een studiedag of vakantie. Bij het kiezen van **Van** wordt **Tot en met** eerst op dezelfde dag gezet.
 4. Kies **Opslaan voor alle klassen**.
 
 De dagen worden centraal bewaard en bij iedere gebruiker automatisch geladen. Maak regelmatig een back-up met **JSON exporteren**. Een back-up terugzetten kan met **JSON importeren**; kies daarna opnieuw **Opslaan voor alle klassen**.

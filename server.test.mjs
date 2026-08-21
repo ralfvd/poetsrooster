@@ -102,6 +102,24 @@ describe("toegangsbeveiliging", () => {
       const openedApp = await fetch(baseUrl, { headers: { Cookie: cookie.split(";")[0] } });
       expect(await openedApp.text()).toContain("Beveiligde app");
 
+      const wrongAdminUnlock = await fetch(`${baseUrl}/api/school-exceptions/unlock`, {
+        method: "POST",
+        headers: {
+          Cookie: cookie.split(";")[0],
+          "X-School-Admin-Password": "verkeerd",
+        },
+      });
+      expect(wrongAdminUnlock.status).toBe(401);
+
+      const correctAdminUnlock = await fetch(`${baseUrl}/api/school-exceptions/unlock`, {
+        method: "POST",
+        headers: {
+          Cookie: cookie.split(";")[0],
+          "X-School-Admin-Password": "beheer-geheim",
+        },
+      });
+      expect(correctAdminUnlock.status).toBe(200);
+
       const uniqueLink = await fetch(`${baseUrl}/toegang/${createAccessLinkToken("toegang-geheim")}`, {
         redirect: "manual",
       });

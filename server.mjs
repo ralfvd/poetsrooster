@@ -293,6 +293,18 @@ export async function createAppServer(options = {}) {
         json(response, 200, await store.load());
         return;
       }
+      if (pathname === "/api/school-exceptions/unlock" && request.method === "POST") {
+        if (!adminPassword) {
+          json(response, 503, { error: "Schoolbeheer is nog niet geconfigureerd op de server." });
+          return;
+        }
+        if (!passwordMatches(request.headers["x-school-admin-password"], adminPassword)) {
+          json(response, 401, { error: "Onjuist beheerwachtwoord." });
+          return;
+        }
+        json(response, 200, { ok: true });
+        return;
+      }
       if (pathname === "/api/school-exceptions" && request.method === "PUT") {
         if (!adminPassword) {
           json(response, 503, { error: "Schoolbeheer is nog niet geconfigureerd op de server." });

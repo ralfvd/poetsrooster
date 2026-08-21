@@ -62,9 +62,10 @@ Zodra een rooster is gegenereerd, staan bovenaan drie exportacties:
 
 In het onderdeel `Schoolkalender` kun je vakanties, studiedagen en feestdagen beheren die voor iedere klas gelden.
 
-1. Vul per vrije dag of vakantie **Van**, **Tot en met** en een reden in, ook als de huidige klas nog leeg is.
-2. Vul het schoolbeheerwachtwoord uit `.env` in.
-3. Kies `Opslaan voor alle klassen`.
+1. Klap onderaan de zijbalk `Schoolkalender voor iedereen` open.
+2. Vul het schoolbeheerwachtwoord uit `.env` in en ontgrendel de kalender.
+3. Vul per vrije dag of vakantie **Van**, **Tot en met** en een reden in, ook als de huidige klas nog leeg is.
+4. Kies `Opslaan voor alle klassen`.
 
 De server bewaart de kalender centraal. Iedere gebruiker krijgt de actuele schooldagen automatisch bij het openen van de app. Klasspecifieke uitzonderingen blijven apart bestaan en kunnen een schoolbrede reden voor dezelfde datum overschrijven.
 

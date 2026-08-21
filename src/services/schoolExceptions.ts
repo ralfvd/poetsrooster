@@ -69,6 +69,20 @@ export async function loadSchoolExceptions(): Promise<SchoolExceptionFile> {
   return normalizeSchoolExceptionFile(body);
 }
 
+export async function unlockSchoolExceptionEditor(adminPassword: string): Promise<void> {
+  const response = await fetch("/api/school-exceptions/unlock", {
+    method: "POST",
+    headers: { "X-School-Admin-Password": adminPassword },
+  });
+  const body = await responseJson(response);
+  if (!response.ok) {
+    const message = body && typeof body === "object" && "error" in body && typeof body.error === "string"
+      ? body.error
+      : "Beheerwachtwoord kon niet worden gecontroleerd.";
+    throw new Error(message);
+  }
+}
+
 export async function saveSchoolExceptions(
   exceptions: ExcludedDate[],
   adminPassword: string,

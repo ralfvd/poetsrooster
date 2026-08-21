@@ -111,6 +111,17 @@ table { width: 100%; border-collapse: collapse; }
 .school-file-actions .button:last-of-type { grid-column: 1 / -1; }
 .server-updated { margin: .7rem 0 0; color: var(--muted); font-size: .7rem; }
 .school-message { margin: .7rem 0 0; padding: .6rem .7rem; border-radius: 7px; color: var(--brand-dark); background: var(--brand-soft); font-size: .78rem; font-weight: 700; }
+.school-admin-summary { cursor: pointer; list-style: none; }
+.school-admin-summary::-webkit-details-marker { display: none; }
+.school-admin-summary > span { display: block; padding-right: 1.7rem; position: relative; }
+.school-admin-summary > span::after { content: "+"; position: absolute; right: 0; top: .25rem; color: var(--brand); font-size: 1.35rem; }
+.school-exceptions-panel[open] .school-admin-summary > span::after { content: "−"; }
+.school-admin-summary strong { display: block; font-family: "Newsreader", Georgia, serif; font-size: 1.35rem; color: var(--ink); }
+.school-unlock, .school-admin-content { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.school-unlock { display: grid; gap: .8rem; }
+.school-unlock .panel-help { margin: 0; }
+.school-calendar-heading { align-items: flex-start; gap: .7rem; }
+.school-calendar-heading .panel-help { margin: 0 0 1rem; }
 .backup-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; }
 .reset-button { border: 0; padding: .6rem; color: var(--danger); background: transparent; text-decoration: underline; text-underline-offset: 3px; }
 
