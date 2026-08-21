@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Student } from "../types";
-import { addMissingStudentFields } from "./ClassEditor";
+import { addMissingStudentFields, setStudentManualOnly } from "./ClassEditor";
 
 const existing: Student = {
   id: "anna",
@@ -48,5 +48,19 @@ describe("addMissingStudentFields", () => {
     const students = [existing];
     expect(addMissingStudentFields(students, 0, [3, 5])).toBe(students);
     expect(addMissingStudentFields(students, 1, [3, 5])).toBe(students);
+  });
+
+  it("vinkt alle weekdagen uit wanneer een leerling handmatig wordt", () => {
+    expect(setStudentManualOnly({ ...existing, availableWeekdays: [3, 5] }, true)).toMatchObject({
+      manualOnly: true,
+      availableWeekdays: [],
+    });
+  });
+
+  it("vinkt weekdagen niet automatisch aan wanneer handmatig wordt uitgezet", () => {
+    expect(setStudentManualOnly({ ...existing, manualOnly: true, availableWeekdays: [] }, false)).toMatchObject({
+      manualOnly: false,
+      availableWeekdays: [],
+    });
   });
 });

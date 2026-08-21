@@ -27,6 +27,14 @@ export function addMissingStudentFields(
   return [...students, ...additions];
 }
 
+export function setStudentManualOnly(student: Student, manualOnly: boolean): Student {
+  return {
+    ...student,
+    manualOnly,
+    availableWeekdays: manualOnly ? [] : student.availableWeekdays,
+  };
+}
+
 export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
   const [desiredCount, setDesiredCount] = useState(students.length ? String(students.length) : "");
 
@@ -141,7 +149,13 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
                     title="Niet meenemen in de automatische verdeling"
                     type="checkbox"
                     checked={student.manualOnly}
-                    onChange={(event) => updateStudent(student.id, { manualOnly: event.target.checked })}
+                    onChange={(event) => {
+                      const updated = setStudentManualOnly(student, event.target.checked);
+                      updateStudent(student.id, {
+                        manualOnly: updated.manualOnly,
+                        availableWeekdays: updated.availableWeekdays,
+                      });
+                    }}
                   />
                 </td>
                 {weekdays.map((weekday) => (
@@ -150,6 +164,7 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
                       aria-label={`${student.name} beschikbaar op ${weekdayLabel(weekday)}`}
                       type="checkbox"
                       checked={student.availableWeekdays.includes(weekday)}
+                      disabled={student.manualOnly}
                       onChange={() => toggleAvailability(student, weekday)}
                     />
                   </td>
@@ -171,7 +186,7 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
         </table>
       </div>
       {students.length === 0 && <p className="empty-copy">Voeg de leerlingen toe om te beginnen.</p>}
-      <p className="table-help"><strong>Handmatig</strong> betekent: nooit meenemen in de automatische verdeling. Je kunt deze leerling zelf zo vaak als nodig inplannen.</p>
+      <p className="table-help"><strong>Handmatig</strong> betekent: nooit meenemen in de automatische verdeling. De weekdagen worden uitgevinkt; je kunt deze leerling zelf zo vaak als nodig inplannen.</p>
       <button className="button ghost full-width" type="button" onClick={addStudent}>
         + Kind toevoegen
       </button>
