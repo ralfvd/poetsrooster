@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  addSchoolExceptionRange,
   downloadSchoolExceptions,
   readSchoolExceptionsFile,
   saveSchoolExceptions,
@@ -18,7 +19,8 @@ type Props = {
 
 export function SchoolExceptionEditor({ schoolFile, loadError, minDate, maxDate, onSaved, onRefresh }: Props) {
   const [draft, setDraft] = useState<ExcludedDate[]>(schoolFile.exceptions);
-  const [date, setDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -28,12 +30,15 @@ export function SchoolExceptionEditor({ schoolFile, loadError, minDate, maxDate,
   useEffect(() => setDraft(schoolFile.exceptions), [schoolFile]);
 
   const addException = () => {
-    if (!date || !reason.trim()) return;
-    const item = { id: `school-${date}`, date, reason: reason.trim() };
-    setDraft((current) => [...current.filter((candidate) => candidate.date !== date), item]
-      .sort((a, b) => a.date.localeCompare(b.date)));
-    setDate("");
-    setReason("");
+    try {
+      setDraft(addSchoolExceptionRange(draft, startDate, endDate, reason));
+      setStartDate("");
+      setEndDate("");
+      setReason("");
+      setMessage("Periode toegevoegd. Sla de schoolkalender nog centraal op.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Periode toevoegen mislukt.");
+    }
   };
 
   const save = async () => {
@@ -75,19 +80,39 @@ export function SchoolExceptionEditor({ schoolFile, loadError, minDate, maxDate,
         </div>
         <span className="count-badge">{draft.length}</span>
       </div>
-      <p className="panel-help">Deze dagen gelden centraal voor alle klassen en alle gebruikers.</p>
+      <p className="panel-help">Deze dagen gelden centraal voor alle klassen en alle gebruikers. Begin- en einddatum tellen beide mee.</p>
       {loadError && <p className="inline-error" role="alert">{loadError}</p>}
       <div className="exception-form">
         <label>
-          Datum
-          <input type="date" min={minDate} max={maxDate} value={date} onChange={(event) => setDate(event.target.value)} />
+          Van
+          <input
+            type="date"
+            min={minDate}
+            max={maxDate}
+            value={startDate}
+            onChange={(event) => {
+              const value = event.target.value;
+              setStartDate(value);
+              if (!endDate || endDate < value) setEndDate(value);
+            }}
+          />
+        </label>
+        <label>
+          Tot en met
+          <input
+            type="date"
+            min={startDate || minDate}
+            max={maxDate}
+            value={endDate}
+            onChange={(event) => setEndDate(event.target.value)}
+          />
         </label>
         <label>
           Reden
           <input value={reason} placeholder="Bijv. kerstvakantie" onChange={(event) => setReason(event.target.value)} />
         </label>
-        <button className="button ghost" type="button" onClick={addException} disabled={!date || !reason.trim()}>
-          Schooldag toevoegen
+        <button className="button ghost" type="button" onClick={addException} disabled={!startDate || !endDate || !reason.trim()}>
+          Periode toevoegen
         </button>
       </div>
       {draft.length > 0 && (

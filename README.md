@@ -62,7 +62,7 @@ Zodra een rooster is gegenereerd, staan bovenaan drie exportacties:
 
 In het onderdeel `Schoolkalender` kun je vakanties, studiedagen en feestdagen beheren die voor iedere klas gelden.
 
-1. Voeg de dagen toe, ook als de huidige klas nog leeg is.
+1. Vul per vrije dag of vakantie **Van**, **Tot en met** en een reden in, ook als de huidige klas nog leeg is.
 2. Vul het schoolbeheerwachtwoord uit `.env` in.
 3. Kies `Opslaan voor alle klassen`.
 

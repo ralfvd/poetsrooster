@@ -27,7 +27,7 @@ De app is standaard bereikbaar via `http://serveradres:8080`. Gebruik HTTPS wann
 ## Schoolbrede vrije dagen beheren
 
 1. Open in de app het onderdeel **Schoolkalender**.
-2. Voeg een datum en reden toe, bijvoorbeeld een studiedag.
+2. Vul **Van**, **Tot en met** en een reden in, bijvoorbeeld een studiedag of vakantie. Gebruik voor één losse dag tweemaal dezelfde datum.
 3. Vul het schoolbeheerwachtwoord uit `.env` in.
 4. Kies **Opslaan voor alle klassen**.
 

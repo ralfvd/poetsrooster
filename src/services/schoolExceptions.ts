@@ -5,6 +5,31 @@ function validDate(value: string): boolean {
   return new Date(`${value}T00:00:00.000Z`).toISOString().slice(0, 10) === value;
 }
 
+export function addSchoolExceptionRange(
+  current: ExcludedDate[],
+  startDate: string,
+  endDate: string,
+  reason: string,
+): ExcludedDate[] {
+  const cleanedReason = reason.trim();
+  if (!validDate(startDate) || !validDate(endDate)) throw new Error("Kies een geldige begin- en einddatum.");
+  if (endDate < startDate) throw new Error("De einddatum moet op of na de begindatum liggen.");
+  if (!cleanedReason || cleanedReason.length > 200) throw new Error("Vul een reden van maximaal 200 tekens in.");
+
+  const byDate = new Map(current.map((item) => [item.date, item]));
+  const cursor = new Date(`${startDate}T00:00:00.000Z`);
+  const end = new Date(`${endDate}T00:00:00.000Z`);
+  const rangeLength = Math.floor((end.getTime() - cursor.getTime()) / 86_400_000) + 1;
+  if (rangeLength > 500) throw new Error("Een periode mag maximaal 500 dagen bevatten.");
+  while (cursor <= end) {
+    const date = cursor.toISOString().slice(0, 10);
+    byDate.set(date, { id: `school-${date}`, date, reason: cleanedReason });
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  if (byDate.size > 500) throw new Error("De schoolkalender mag maximaal 500 uitzonderingsdagen bevatten.");
+  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export function normalizeSchoolExceptionFile(input: unknown): SchoolExceptionFile {
   if (!input || typeof input !== "object" || !("exceptions" in input) || !Array.isArray(input.exceptions)) {
     throw new Error("Ongeldig JSON-bestand: 'exceptions' moet een lijst zijn.");
