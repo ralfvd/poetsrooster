@@ -14,15 +14,32 @@ Open daarna `.env` en vervang de voorbeeldwaarde door een sterk, uniek wachtwoor
 
 ```text
 SCHOOL_ADMIN_PASSWORD=zet-hier-een-sterk-uniek-wachtwoord
+ACCESS_PASSWORD=zet-hier-een-ander-sterk-uniek-wachtwoord
 ```
 
-Bewaar `.env` alleen op de server en deel het wachtwoord uitsluitend met schoolbeheerders. Start vervolgens de app:
+`ACCESS_PASSWORD` beschermt de volledige website. `SCHOOL_ADMIN_PASSWORD` is een extra beheerderswachtwoord voor het wijzigen van de centrale schoolkalender.
+
+Bewaar `.env` alleen op de server. Deel `SCHOOL_ADMIN_PASSWORD` uitsluitend met schoolbeheerders; geef ouders bij voorkeur de unieke toegangslink in plaats van het losse `ACCESS_PASSWORD`. Start vervolgens de app:
 
 ```bash
 docker compose up -d --build
 ```
 
 De app is standaard bereikbaar via `http://serveradres:8080`. Gebruik HTTPS wanneer de app via internet bereikbaar is.
+
+## Website openen
+
+Wie de basislink opent zonder geldige cookie, krijgt een wachtwoordveld voor `ACCESS_PASSWORD`.
+
+De server maakt daarnaast een unieke toegangsroute die meteen een cookie voor 30 dagen plaatst. Bekijk deze route na het starten met:
+
+```bash
+docker compose logs --tail=30
+```
+
+Zoek naar `Unieke toegangsroute`, plak het getoonde pad achter het serveradres en deel die volledige link alleen met bevoegde ouders. Het wachtwoord zelf staat niet in de link. Na één bezoek werkt ook de gewone basislink in dezelfde browser.
+
+Als `ACCESS_PASSWORD` wordt gewijzigd, worden bestaande cookies en de oude unieke link automatisch ongeldig. Maak de container daarna opnieuw aan met `docker compose up -d --force-recreate`.
 
 ## Schoolbrede vrije dagen beheren
 

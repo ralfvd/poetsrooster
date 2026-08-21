@@ -8,6 +8,7 @@ services:
       - "8080:3000"
     environment:
       SCHOOL_ADMIN_PASSWORD: ${SCHOOL_ADMIN_PASSWORD:-}
+      ACCESS_PASSWORD: ${ACCESS_PASSWORD:-}
     volumes:
       - poetsrooster-data:/app/data
     restart: unless-stopped

@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { access, mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
@@ -28,6 +28,57 @@ function json(response, status, value) {
     "Content-Length": Buffer.byteLength(body),
   });
   response.end(body);
+}
+
+function html(response, status, body, extraHeaders = {}) {
+  response.writeHead(status, {
+    "Cache-Control": "no-store",
+    "Content-Type": "text/html; charset=utf-8",
+    "Content-Length": Buffer.byteLength(body),
+    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    ...extraHeaders,
+  });
+  response.end(body);
+}
+
+function loginPage(message = "", configured = true) {
+  const notice = configured
+    ? message
+    : "Toegang is nog niet ingesteld. Voeg ACCESS_PASSWORD toe aan .env en start de container opnieuw.";
+  return `<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toegang - Poetsrooster</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #1d2927; background: #f4f1e9; }
+    * { box-sizing: border-box; }
+    body { display: grid; min-height: 100vh; margin: 0; padding: 1rem; place-items: center; }
+    main { width: min(100%, 390px); padding: 2rem; border: 1px solid #dedbd2; border-radius: 18px; background: #fffdf8; box-shadow: 0 16px 45px rgb(40 55 51 / 10%); }
+    h1 { margin: 0 0 .5rem; font-family: Georgia, serif; font-size: 2rem; }
+    p { margin: 0 0 1.2rem; color: #65716e; line-height: 1.45; }
+    .notice { padding: .7rem; border-radius: 8px; color: #7b342c; background: #f7e2de; font-size: .85rem; }
+    label { display: grid; gap: .45rem; font-size: .85rem; font-weight: 700; }
+    input { width: 100%; padding: .75rem; border: 1px solid #b8c9c5; border-radius: 9px; font: inherit; }
+    button { width: 100%; margin-top: .8rem; padding: .75rem; border: 0; border-radius: 9px; color: white; background: #165c56; font: inherit; font-weight: 800; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Poetsrooster</h1>
+    <p>Vul het toegangswachtwoord in om verder te gaan.</p>
+    ${notice ? `<p class="notice" role="alert">${notice}</p>` : ""}
+    ${configured ? `<form method="post" action="/api/access/login">
+      <label>Wachtwoord<input name="password" type="password" autocomplete="current-password" required autofocus></label>
+      <button type="submit">Open poetsrooster</button>
+    </form>` : ""}
+  </main>
+</body>
+</html>`;
 }
 
 function validDate(value) {
@@ -72,11 +123,62 @@ async function readBody(request) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
+async function readForm(request) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > 10_000) throw new Error("Formulier is te groot.");
+    chunks.push(chunk);
+  }
+  return new URLSearchParams(Buffer.concat(chunks).toString("utf8"));
+}
+
 export function passwordMatches(received, expected) {
   if (!expected || typeof received !== "string") return false;
   const receivedBuffer = Buffer.from(received);
   const expectedBuffer = Buffer.from(expected);
   return receivedBuffer.length === expectedBuffer.length && timingSafeEqual(receivedBuffer, expectedBuffer);
+}
+
+function accessDigest(password, purpose) {
+  return createHash("sha256").update(`poetsrooster:${purpose}:${password}`).digest("base64url");
+}
+
+export function createAccessLinkToken(password) {
+  return accessDigest(password, "link");
+}
+
+export function createAccessCookieValue(password) {
+  return accessDigest(password, "cookie");
+}
+
+function cookieValue(request, name) {
+  const cookies = String(request.headers.cookie ?? "").split(";");
+  for (const cookie of cookies) {
+    const separator = cookie.indexOf("=");
+    if (separator < 0 || cookie.slice(0, separator).trim() !== name) continue;
+    return cookie.slice(separator + 1).trim();
+  }
+  return undefined;
+}
+
+function requestHasAccess(request, accessPassword) {
+  if (!accessPassword) return false;
+  return passwordMatches(cookieValue(request, "poetsrooster_access"), createAccessCookieValue(accessPassword));
+}
+
+function accessCookie(request, accessPassword) {
+  const forwardedProtocol = String(request.headers["x-forwarded-proto"] ?? "").split(",")[0].trim();
+  const secure = forwardedProtocol === "https" || Boolean(request.socket.encrypted);
+  return [
+    `poetsrooster_access=${createAccessCookieValue(accessPassword)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    "Max-Age=2592000",
+    secure ? "Secure" : "",
+  ].filter(Boolean).join("; ");
 }
 
 async function ensureDataFile(dataFile) {
@@ -136,6 +238,7 @@ export async function createAppServer(options = {}) {
   const dataDirectory = options.dataDirectory ?? process.env.DATA_DIR ?? defaultDataDirectory;
   const distDirectory = options.distDirectory ?? defaultDistDirectory;
   const adminPassword = options.adminPassword ?? process.env.SCHOOL_ADMIN_PASSWORD ?? "";
+  const accessPassword = options.accessPassword ?? process.env.ACCESS_PASSWORD ?? "";
   const store = await createSchoolExceptionStore(dataDirectory);
 
   return createHttpServer(async (request, response) => {
@@ -143,6 +246,47 @@ export async function createAppServer(options = {}) {
       const pathname = new URL(request.url, "http://localhost").pathname;
       if (pathname === "/api/health" && request.method === "GET") {
         json(response, 200, { ok: true });
+        return;
+      }
+      if (pathname.startsWith("/toegang/") && request.method === "GET") {
+        const token = decodeURIComponent(pathname.slice("/toegang/".length));
+        if (accessPassword && passwordMatches(token, createAccessLinkToken(accessPassword))) {
+          response.writeHead(302, {
+            "Cache-Control": "no-store",
+            "Location": "/",
+            "Referrer-Policy": "no-referrer",
+            "Set-Cookie": accessCookie(request, accessPassword),
+          });
+          response.end();
+          return;
+        }
+        html(response, accessPassword ? 401 : 503, loginPage("De toegangslink is niet geldig.", Boolean(accessPassword)));
+        return;
+      }
+      if (pathname === "/api/access/login" && request.method === "POST") {
+        if (!accessPassword) {
+          html(response, 503, loginPage("", false));
+          return;
+        }
+        const password = (await readForm(request)).get("password");
+        if (!passwordMatches(password, accessPassword)) {
+          html(response, 401, loginPage("Het wachtwoord is niet juist."));
+          return;
+        }
+        response.writeHead(303, {
+          "Cache-Control": "no-store",
+          "Location": "/",
+          "Set-Cookie": accessCookie(request, accessPassword),
+        });
+        response.end();
+        return;
+      }
+      if (!requestHasAccess(request, accessPassword)) {
+        if (pathname.startsWith("/api/")) {
+          json(response, 401, { error: accessPassword ? "Log eerst in." : "Toegang is nog niet geconfigureerd." });
+        } else {
+          html(response, accessPassword ? 200 : 503, loginPage("", Boolean(accessPassword)));
+        }
         return;
       }
       if (pathname === "/api/school-exceptions" && request.method === "GET") {
@@ -176,8 +320,14 @@ export async function createAppServer(options = {}) {
 const isMainModule = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 if (isMainModule) {
   const port = Number(process.env.PORT || 3000);
+  const accessPassword = process.env.ACCESS_PASSWORD ?? "";
   const server = await createAppServer();
   server.listen(port, "0.0.0.0", () => {
     console.log(`Poetsrooster luistert op poort ${port}`);
+    if (accessPassword) {
+      console.log(`Unieke toegangsroute: /toegang/${createAccessLinkToken(accessPassword)}`);
+    } else {
+      console.warn("ACCESS_PASSWORD ontbreekt; de app blijft gesloten totdat dit is ingesteld.");
+    }
   });
 }

@@ -22,7 +22,7 @@ Maak voor centraal schoolbeheer eerst een lokaal configuratiebestand:
 cp .env.example .env
 ```
 
-Vervang in `.env` het voorbeeld door een sterk `SCHOOL_ADMIN_PASSWORD`. Dit wachtwoord is alleen nodig om schoolbrede dagen te wijzigen; alle gebruikers kunnen de centrale kalender zonder wachtwoord lezen.
+Vervang in `.env` beide voorbeelden door sterke, verschillende wachtwoorden. `ACCESS_PASSWORD` beschermt de hele website; `SCHOOL_ADMIN_PASSWORD` is alleen nodig om schoolbrede dagen te wijzigen.
 
 Tests en productiebuild:
 
@@ -39,7 +39,7 @@ Maak voor de eerste start het serverwachtwoord aan:
 cp .env.example .env
 ```
 
-Pas daarna `SCHOOL_ADMIN_PASSWORD` in `.env` aan.
+Pas daarna zowel `ACCESS_PASSWORD` als `SCHOOL_ADMIN_PASSWORD` in `.env` aan.
 
 ```bash
 docker compose build
