@@ -22,6 +22,7 @@ import type {
 import { formatLongDate } from "./utils/dates";
 import { mergeExclusions } from "./utils/exclusions";
 import { activeSlotCount, filledSlotCount, generateSchedule } from "./utils/schedule";
+import { needsAvailabilityWarning } from "./utils/students";
 
 const storage = new LocalStorageProvider();
 const emptySchoolFile: SchoolExceptionFile = { version: 1, updatedAt: null, exceptions: [] };
@@ -190,7 +191,7 @@ export default function App() {
   const assign = (date: string, slot: number, studentId: string | null) => {
     const day = state.schedule.find((item) => item.date === date);
     const student = state.students.find((item) => item.id === studentId);
-    if (student && day && !student.availableWeekdays.includes(day.weekday)) {
+    if (student && day && needsAvailabilityWarning(student, day.weekday)) {
       const accepted = window.confirm(
         `${student.name} staat niet als beschikbaar op deze weekdag. Toch toewijzen en vastzetten?`,
       );
