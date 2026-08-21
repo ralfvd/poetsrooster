@@ -1,0 +1,123 @@
+import { describe, expect, it } from "vitest";
+import type { Assignment, ScheduleDay, Student, Weekday } from "../types";
+import { optimizeSchedule } from "./optimizer";
+
+const assignment = (studentId: string | null = null, locked = false): Assignment => ({
+  studentId,
+  locked,
+  source: locked ? "manual" : null,
+});
+
+function students(count: number, availableWeekdays: Weekday[] = [3, 5]): Student[] {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `student-${index + 1}`,
+    name: `Kind ${index + 1}`,
+    previousYearCount: 3,
+    availableWeekdays,
+  }));
+}
+
+function days(count: number, capacity = 1, weekdays: Weekday[] = [3, 5]): ScheduleDay[] {
+  return Array.from({ length: count }, (_, index) => {
+    const weekday = weekdays[index % weekdays.length];
+    const date = new Date(Date.UTC(2026, 0, 1 + index * 2)).toISOString().slice(0, 10);
+    return { date, weekday, excluded: false, assignments: Array.from({ length: capacity }, () => assignment()) };
+  });
+}
+
+function counts(schedule: ScheduleDay[], roster: Student[]): Map<string, number> {
+  const result = new Map(roster.map((student) => [student.id, 0]));
+  schedule.forEach((day) => day.assignments.forEach((item) => {
+    if (item.studentId) result.set(item.studentId, (result.get(item.studentId) ?? 0) + 1);
+  }));
+  return result;
+}
+
+describe("optimizeSchedule", () => {
+  it("verdeelt 60 vrije slots exact over 30 leerlingen", () => {
+    const roster = students(30);
+    const result = optimizeSchedule(roster, days(60));
+    expect([...counts(result.schedule, roster).values()]).toEqual(Array(30).fill(2));
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("geeft restslots op basis van de historische telling", () => {
+    const roster = students(31).map((student, index) => ({
+      ...student,
+      previousYearCount: index < 3 ? 1 : 4,
+    }));
+    const result = optimizeSchedule(roster, days(96));
+    const totals = counts(result.schedule, roster);
+    expect([totals.get("student-1"), totals.get("student-2"), totals.get("student-3")]).toEqual([4, 4, 4]);
+    expect([...totals.values()].filter((count) => count === 4)).toHaveLength(3);
+    expect([...totals.values()].filter((count) => count === 3)).toHaveLength(28);
+  });
+
+  it("plant schaarse vrijdagplaatsen zonder availability te schenden", () => {
+    const fridayOnly = students(10, [5]);
+    const flexible = students(20, [3, 5]).map((student, index) => ({ ...student, id: `flex-${index}` }));
+    const roster = [...fridayOnly, ...flexible];
+    const result = optimizeSchedule(roster, days(60, 1, [3, 5]));
+    expect(result.schedule.every((day) => {
+      const selected = roster.find((student) => student.id === day.assignments[0].studentId);
+      return selected?.availableWeekdays.includes(day.weekday);
+    })).toBe(true);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("laat handmatig vastgezette toewijzingen exact staan", () => {
+    const roster = students(8);
+    const schedule = days(20);
+    const locked = [0, 3, 6, 9, 12];
+    locked.forEach((dayIndex, index) => {
+      schedule[dayIndex].assignments[0] = assignment(roster[index].id, true);
+    });
+    const result = optimizeSchedule(roster, schedule);
+    locked.forEach((dayIndex, index) => {
+      expect(result.schedule[dayIndex].assignments[0]).toEqual(assignment(roster[index].id, true));
+    });
+  });
+
+  it("laat uitgesloten dagen zichtbaar en leeg", () => {
+    const roster = students(5);
+    const schedule = days(4);
+    schedule[1] = {
+      ...schedule[1],
+      excluded: true,
+      exclusionReason: "herfstvakantie",
+      assignments: [assignment(roster[0].id, false)],
+    };
+    const result = optimizeSchedule(roster, schedule);
+    expect(result.schedule).toHaveLength(4);
+    expect(result.schedule[1]).toMatchObject({ excluded: true, exclusionReason: "herfstvakantie", assignments: [] });
+  });
+
+  it("laat onmogelijke vrijdagplaatsen leeg en geeft een waarschuwing", () => {
+    const roster = students(5, [3]);
+    const result = optimizeSchedule(roster, days(3, 1, [5]));
+    expect(result.schedule.flatMap((day) => day.assignments).every((item) => item.studentId === null)).toBe(true);
+    expect(result.warnings.some((warning) => warning.includes("Geen beschikbare leerling"))).toBe(true);
+  });
+
+  it("kan tweemaal optimaliseren zonder locks of tellingen te beschadigen", () => {
+    const roster = students(10);
+    const schedule = days(31);
+    schedule[0].assignments[0] = assignment(roster[0].id, true);
+    const first = optimizeSchedule(roster, schedule);
+    const second = optimizeSchedule(roster, first.schedule);
+    expect(second.schedule[0].assignments[0]).toEqual(assignment(roster[0].id, true));
+    expect(second.schedule.flatMap((day) => day.assignments).filter((item) => item.studentId)).toHaveLength(31);
+    const values = [...counts(second.schedule, roster).values()];
+    expect(Math.max(...values) - Math.min(...values)).toBeLessThanOrEqual(1);
+    expect(second.schedule.flatMap((day) => day.assignments).filter((item) => !item.locked).every((item) => item.source === "optimizer")).toBe(true);
+  });
+
+  it("zet nooit dezelfde leerling dubbel op één poetsmoment", () => {
+    const roster = students(4);
+    const result = optimizeSchedule(roster, days(8, 3));
+    result.schedule.forEach((day) => {
+      const ids = day.assignments.map((item) => item.studentId);
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+  });
+});
