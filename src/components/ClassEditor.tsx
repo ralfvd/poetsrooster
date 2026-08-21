@@ -186,6 +186,7 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
         </table>
       </div>
       {students.length === 0 && <p className="empty-copy">Voeg de leerlingen toe om te beginnen.</p>}
+      <p className="table-help"><strong>Vorig jaar 0</strong> wordt bij een nieuwe leerling voor de verdeling behandeld als het gemiddelde van de andere leerlingen.</p>
       <p className="table-help"><strong>Handmatig</strong> betekent: nooit meenemen in de automatische verdeling. De weekdagen worden uitgevinkt; je kunt deze leerling zelf zo vaak als nodig inplannen.</p>
       <button className="button ghost full-width" type="button" onClick={addStudent}>
         + Kind toevoegen

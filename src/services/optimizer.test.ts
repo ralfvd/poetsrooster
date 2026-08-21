@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Assignment, ScheduleDay, Student, Weekday } from "../types";
-import { optimizeSchedule } from "./optimizer";
+import { effectivePreviousYearCounts, optimizeSchedule } from "./optimizer";
 
 const assignment = (studentId: string | null = null, locked = false): Assignment => ({
   studentId,
@@ -52,6 +52,25 @@ describe("optimizeSchedule", () => {
     expect([totals.get("student-1"), totals.get("student-2"), totals.get("student-3")]).toEqual([4, 4, 4]);
     expect([...totals.values()].filter((count) => count === 4)).toHaveLength(3);
     expect([...totals.values()].filter((count) => count === 3)).toHaveLength(28);
+  });
+
+  it("behandelt nul als het gemiddelde van bekende eerdere tellingen", () => {
+    const roster = students(4).map((student, index) => ({
+      ...student,
+      previousYearCount: [0, 2, 3, 4][index],
+    }));
+    const effective = effectivePreviousYearCounts(roster);
+    expect(effective.get("student-1")).toBe(3);
+
+    const result = optimizeSchedule(roster, days(9));
+    const totals = counts(result.schedule, roster);
+    expect(totals.get("student-1")).toBe(2);
+    expect(totals.get("student-2")).toBe(3);
+  });
+
+  it("houdt alle historische tellingen gelijk wanneer iedereen op nul staat", () => {
+    const roster = students(4).map((student) => ({ ...student, previousYearCount: 0 }));
+    expect([...effectivePreviousYearCounts(roster).values()]).toEqual([0, 0, 0, 0]);
   });
 
   it("plant schaarse vrijdagplaatsen zonder availability te schenden", () => {

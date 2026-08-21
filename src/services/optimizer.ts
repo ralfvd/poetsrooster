@@ -25,6 +25,21 @@ function hash(value: string): number {
   return result >>> 0;
 }
 
+export function effectivePreviousYearCounts(students: Student[]): Map<string, number> {
+  const automaticallyScheduled = students.filter((student) => !student.manualOnly);
+  const knownCounts = automaticallyScheduled
+    .map((student) => student.previousYearCount)
+    .filter((count) => count > 0);
+  const averageKnownCount = knownCounts.length
+    ? knownCounts.reduce((total, count) => total + count, 0) / knownCounts.length
+    : 0;
+
+  return new Map(students.map((student) => [
+    student.id,
+    student.previousYearCount === 0 && knownCounts.length ? averageKnownCount : student.previousYearCount,
+  ]));
+}
+
 export function optimizeSchedule(students: Student[], input: ScheduleDay[]): OptimizerResult {
   const schedule = cloneSchedule(input);
   const validStudents = new Map(students.map((student) => [student.id, student]));
@@ -32,6 +47,7 @@ export function optimizeSchedule(students: Student[], input: ScheduleDay[]): Opt
     students.map((student) => [student.id, { count: 0, dates: [], weekdayCounts: {} }]),
   );
   const warnings: string[] = [];
+  const previousYearCounts = effectivePreviousYearCounts(students);
 
   for (const day of schedule) {
     if (day.excluded) {
@@ -93,7 +109,7 @@ export function optimizeSchedule(students: Student[], input: ScheduleDay[]): Opt
         : Number.MAX_SAFE_INTEGER;
       return (
         aState.count - bState.count ||
-        a.previousYearCount + aState.count - (b.previousYearCount + bState.count) ||
+        previousYearCounts.get(a.id)! + aState.count - (previousYearCounts.get(b.id)! + bState.count) ||
         bDistance - aDistance ||
         (aState.weekdayCounts[day.weekday] ?? 0) - (bState.weekdayCounts[day.weekday] ?? 0) ||
         hash(`${day.date}:${slot.assignmentIndex}:${a.id}`) - hash(`${day.date}:${slot.assignmentIndex}:${b.id}`)
