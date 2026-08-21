@@ -13,6 +13,11 @@ function cleanCell(value: string): string {
   return value.replace(/[\t\r\n]+/g, " ").trim();
 }
 
+export function buildScheduleTitle(className: string): string {
+  const cleanedClassName = cleanCell(className);
+  return cleanedClassName ? `Poetsrooster ${cleanedClassName}` : "Poetsrooster";
+}
+
 function exportRows(
   schedule: ScheduleDay[],
   students: Student[],
@@ -121,7 +126,7 @@ export async function createSchedulePdf(
   doc.setTextColor(25, 37, 34);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text(settings.className || "Poetsrooster", margin, 9.5);
+  doc.text(buildScheduleTitle(settings.className), margin, 9.5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.text(

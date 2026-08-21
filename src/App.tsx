@@ -6,7 +6,7 @@ import { ScheduleTable } from "./components/ScheduleTable";
 import { SchoolExceptionEditor } from "./components/SchoolExceptionEditor";
 import { Statistics } from "./components/Statistics";
 import { WarningPanel } from "./components/WarningPanel";
-import { copyScheduleToClipboard, downloadSchedulePdf } from "./services/export";
+import { buildScheduleTitle, copyScheduleToClipboard, downloadSchedulePdf } from "./services/export";
 import { optimizeSchedule } from "./services/optimizer";
 import { loadSchoolExceptions } from "./services/schoolExceptions";
 import { LocalStorageProvider } from "./services/storage";
@@ -273,7 +273,10 @@ export default function App() {
         <div className="brand-mark" aria-hidden="true">P</div>
         <div>
           <p className="eyebrow">Eerlijk verdeeld, rustig geregeld</p>
-          <h1>{state.settings.className || "Poetsrooster"}</h1>
+          <h1>
+            <span className="no-print">{state.settings.className || "Poetsrooster"}</span>
+            <span className="print-only">{buildScheduleTitle(state.settings.className)}</span>
+          </h1>
           <p className="print-period">{periodLabel}</p>
         </div>
         <div className="header-actions no-print">

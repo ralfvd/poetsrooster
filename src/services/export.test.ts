@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ScheduleSettings, Student } from "../types";
 import { generateSchedule } from "../utils/schedule";
-import { buildScheduleTsv, createSchedulePdf } from "./export";
+import { buildScheduleTitle, buildScheduleTsv, createSchedulePdf } from "./export";
 
 const settings: ScheduleSettings = {
   className: "Groep 7B",
@@ -29,6 +29,12 @@ function filledSchedule() {
 }
 
 describe("schedule export", () => {
+  it("zet Poetsrooster voor de ingevulde klasnaam", () => {
+    expect(buildScheduleTitle("Groep 7B")).toBe("Poetsrooster Groep 7B");
+    expect(buildScheduleTitle("  Groep 8A  ")).toBe("Poetsrooster Groep 8A");
+    expect(buildScheduleTitle("")).toBe("Poetsrooster");
+  });
+
   it("maakt plakbare tabgescheiden tekst met uitzonderingen", () => {
     const text = buildScheduleTsv(filledSchedule(), students, settings.cleaningWeekdays);
     expect(text.startsWith("Week van\tWoensdag\tVrijdag\tOpmerkingen")).toBe(true);
