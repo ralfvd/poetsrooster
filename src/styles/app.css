@@ -79,6 +79,9 @@ table { width: 100%; border-collapse: collapse; }
 .button.secondary { color: white; background: #263c38; }
 .button.ghost { color: var(--brand-dark); background: transparent; border-color: #b8c9c5; }
 .full-width { width: 100%; }
+.student-count-builder { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: .55rem; margin-bottom: .35rem; }
+.student-count-builder .button { white-space: nowrap; }
+.student-count-help { margin: 0 0 .8rem; color: var(--muted); font-size: .72rem; line-height: 1.4; }
 .editor-table-wrap, .stats-scroll, .schedule-scroll { overflow-x: auto; }
 .editor-table { font-size: .8rem; }
 .editor-table th { padding: .45rem .25rem; color: var(--muted); text-align: left; }
@@ -155,6 +158,7 @@ table { width: 100%; border-collapse: collapse; }
   .export-status { width: 100%; text-align: right; }
   .brand-mark { width: 2.65rem; height: 2.65rem; border-radius: 13px 13px 13px 4px; }
   .sidebar { grid-template-columns: 1fr; }
+  .student-count-builder { grid-template-columns: 1fr; }
   .schedule-toolbar { align-items: stretch; flex-direction: column; padding: 1.2rem; }
   .toolbar-actions { justify-content: stretch; }
   .toolbar-actions .button { flex: 1; }

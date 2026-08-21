@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { Student, Weekday } from "../types";
 import { weekdayLabel } from "../utils/dates";
 
@@ -8,18 +9,45 @@ type Props = {
   onRemove: (studentId: string) => void;
 };
 
+export function addMissingStudentFields(
+  students: Student[],
+  total: number,
+  weekdays: Weekday[],
+  createId: () => string = () => crypto.randomUUID(),
+): Student[] {
+  if (!Number.isInteger(total) || total <= students.length || total > 100) return students;
+  const additions = Array.from({ length: total - students.length }, (): Student => ({
+    id: createId(),
+    name: "",
+    previousYearCount: 0,
+    manualOnly: false,
+    availableWeekdays: [...weekdays],
+  }));
+  return [...students, ...additions];
+}
+
 export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
+  const [desiredCount, setDesiredCount] = useState(students.length ? String(students.length) : "");
+
+  useEffect(() => {
+    setDesiredCount(students.length ? String(students.length) : "");
+  }, [students.length]);
+
+  const newStudent = (name = ""): Student => ({
+    id: crypto.randomUUID(),
+    name,
+    previousYearCount: 0,
+    manualOnly: false,
+    availableWeekdays: [...weekdays],
+  });
+
   const addStudent = () => {
-    onChange([
-      ...students,
-      {
-        id: crypto.randomUUID(),
-        name: `Leerling ${students.length + 1}`,
-        previousYearCount: 0,
-        manualOnly: false,
-        availableWeekdays: [...weekdays],
-      },
-    ]);
+    onChange([...students, newStudent(`Leerling ${students.length + 1}`)]);
+  };
+
+  const createStudentFields = () => {
+    const total = Number(desiredCount);
+    onChange(addMissingStudentFields(students, total, weekdays));
   };
 
   const updateStudent = (id: string, patch: Partial<Student>) => {
@@ -42,6 +70,33 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
         </div>
         <span className="count-badge">{students.length}</span>
       </div>
+      <div className="student-count-builder">
+        <label>
+          Aantal leerlingen
+          <input
+            type="number"
+            min="1"
+            max="100"
+            inputMode="numeric"
+            placeholder="Bijv. 25"
+            value={desiredCount}
+            onChange={(event) => setDesiredCount(event.target.value)}
+          />
+        </label>
+        <button
+          className="button ghost"
+          type="button"
+          disabled={
+            !Number.isInteger(Number(desiredCount)) ||
+            Number(desiredCount) <= students.length ||
+            Number(desiredCount) > 100
+          }
+          onClick={createStudentFields}
+        >
+          Invulvelden maken
+        </button>
+      </div>
+      <p className="student-count-help">Bestaande leerlingen blijven staan; alleen ontbrekende invulvelden worden toegevoegd.</p>
       <div className="editor-table-wrap">
         <table className="editor-table">
           <thead>
@@ -58,11 +113,12 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
             </tr>
           </thead>
           <tbody>
-            {students.map((student) => (
+            {students.map((student, studentIndex) => (
               <tr key={student.id}>
                 <td>
                   <input
                     aria-label="Naam leerling"
+                    placeholder={`Leerling ${studentIndex + 1}`}
                     value={student.name}
                     onChange={(event) => updateStudent(student.id, { name: event.target.value })}
                   />
