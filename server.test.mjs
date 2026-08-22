@@ -6,6 +6,7 @@ import {
   createSchoolExceptionStore,
   createAccessLinkToken,
   createAppServer,
+  normalizeFeedbackWhatsappNumber,
   passwordMatches,
   validateSchoolExceptionFile,
 } from "./server.mjs";
@@ -48,6 +49,12 @@ describe("schoolbrede uitzonderingen API", () => {
     expect(passwordMatches("verkeerd", "test-geheim")).toBe(false);
     expect(passwordMatches(undefined, "test-geheim")).toBe(false);
   });
+
+  it("accepteert alleen een WhatsApp-nummer in het afgesproken formaat", () => {
+    expect(normalizeFeedbackWhatsappNumber("31612345678")).toBe("31612345678");
+    expect(normalizeFeedbackWhatsappNumber("+31612345678")).toBe("");
+    expect(normalizeFeedbackWhatsappNumber("316 12345678")).toBe("");
+  });
 });
 
 describe("toegangsbeveiliging", () => {
@@ -62,6 +69,7 @@ describe("toegangsbeveiliging", () => {
       distDirectory,
       accessPassword: "toegang-geheim",
       adminPassword: "beheer-geheim",
+      feedbackWhatsappNumber: "31612345678",
     });
     await new Promise((resolve, reject) => {
       server.once("error", reject);
@@ -81,6 +89,8 @@ describe("toegangsbeveiliging", () => {
 
       const blockedApi = await fetch(`${baseUrl}/api/school-exceptions`);
       expect(blockedApi.status).toBe(401);
+      const blockedConfig = await fetch(`${baseUrl}/api/config`);
+      expect(blockedConfig.status).toBe(401);
 
       const wrongLogin = await fetch(`${baseUrl}/api/access/login`, {
         method: "POST",
@@ -103,6 +113,10 @@ describe("toegangsbeveiliging", () => {
 
       const openedApp = await fetch(baseUrl, { headers: { Cookie: cookie.split(";")[0] } });
       expect(await openedApp.text()).toContain("Beveiligde app");
+
+      const appConfig = await fetch(`${baseUrl}/api/config`, { headers: { Cookie: cookie.split(";")[0] } });
+      expect(appConfig.status).toBe(200);
+      expect(await appConfig.json()).toEqual({ feedbackWhatsappNumber: "31612345678" });
 
       const wrongAdminUnlock = await fetch(`${baseUrl}/api/school-exceptions/unlock`, {
         method: "POST",

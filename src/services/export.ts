@@ -1,4 +1,5 @@
 import type { jsPDF } from "jspdf";
+import type { SheetData } from "write-excel-file/browser";
 import type { ScheduleDay, ScheduleSettings, Student, Weekday } from "../types";
 import { formatDate, formatLongDate, weekdayLabel } from "../utils/dates";
 import { formatExclusionNotes } from "../utils/exclusions";
@@ -21,6 +22,14 @@ export function buildScheduleTitle(className: string): string {
 
 export function buildPrintedOnLabel(date = new Date()): string {
   return `Afgedrukt op ${date.toLocaleDateString("nl-NL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })}`;
+}
+
+function buildCreatedOnLabel(date = new Date()): string {
+  return `Gemaakt op ${date.toLocaleDateString("nl-NL", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -94,6 +103,95 @@ function safeFilename(value: string): string {
     .replace(/^-+|-+$/g, "")
     .toLowerCase();
   return cleaned || "poetsrooster";
+}
+
+function excelDate(value: string): Date {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day, 12);
+}
+
+export function buildScheduleExcelData(
+  settings: ScheduleSettings,
+  schedule: ScheduleDay[],
+  students: Student[],
+  createdAt = new Date(),
+): SheetData {
+  const rows = exportRows(schedule, students, settings.cleaningWeekdays);
+  const columnCount = settings.cleaningWeekdays.length + 2;
+  const mergedRow = (value: string, style: Record<string, unknown> = {}) => [
+    { value, columnSpan: columnCount, ...style },
+    ...Array.from({ length: columnCount - 1 }, () => null),
+  ];
+  const border = { borderColor: "#AAB5B2", borderStyle: "thin" };
+
+  return [
+    mergedRow(buildScheduleTitle(settings.className), {
+      height: 28,
+      fontSize: 16,
+      fontWeight: "bold",
+      textColor: "#173C38",
+      alignVertical: "center",
+    }),
+    mergedRow(`${formatLongDate(settings.startDate)} t/m ${formatLongDate(settings.endDate)}`, {
+      height: 20,
+      textColor: "#455754",
+    }),
+    mergedRow(buildCreatedOnLabel(createdAt), {
+      height: 18,
+      fontSize: 9,
+      fontStyle: "italic",
+      textColor: "#65716E",
+    }),
+    ["Week van", ...settings.cleaningWeekdays.map(weekdayLabel), "Opmerkingen"].map((value) => ({
+      value,
+      height: 26,
+      fontWeight: "bold",
+      textColor: "#FFFFFF",
+      backgroundColor: "#165C56",
+      alignVertical: "center",
+      wrap: true,
+      ...border,
+    })),
+    ...rows.map((row, index) => {
+      const backgroundColor = index % 2 === 1 ? "#F2F2F2" : "#FFFFFF";
+      const cellStyle = {
+        height: 25,
+        backgroundColor,
+        alignVertical: "center",
+        wrap: true,
+        ...border,
+      };
+      return [
+        { value: excelDate(row.weekStart), format: "dd-mm-yyyy", fontWeight: "bold", ...cellStyle },
+        ...settings.cleaningWeekdays.map((weekday) => ({ value: row.days[weekday], ...cellStyle })),
+        { value: row.notes, ...cellStyle },
+      ];
+    }),
+  ] as SheetData;
+}
+
+export async function downloadScheduleExcel(
+  settings: ScheduleSettings,
+  schedule: ScheduleDay[],
+  students: Student[],
+): Promise<void> {
+  const { default: writeExcelFile } = await import("write-excel-file/browser");
+  const columns = [
+    { width: 14 },
+    ...settings.cleaningWeekdays.map(() => ({ width: 25 })),
+    { width: 44 },
+  ];
+  await writeExcelFile(buildScheduleExcelData(settings, schedule, students), {
+    sheet: "Poetsrooster",
+    columns,
+    orientation: "landscape",
+    stickyRowsCount: 4,
+    showGridLines: false,
+    zoomScale: 0.9,
+  }, {
+    fontFamily: "Aptos",
+    fontSize: 10,
+  }).toFile(`${safeFilename(settings.className)}-poetsrooster.xlsx`);
 }
 
 function truncate(doc: jsPDF, value: string, maxWidth: number): string {

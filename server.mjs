@@ -143,6 +143,11 @@ export function passwordMatches(received, expected) {
   return receivedBuffer.length === expectedBuffer.length && timingSafeEqual(receivedBuffer, expectedBuffer);
 }
 
+export function normalizeFeedbackWhatsappNumber(value) {
+  const number = typeof value === "string" ? value.trim() : "";
+  return /^316\d{8}$/.test(number) ? number : "";
+}
+
 function accessDigest(password, purpose) {
   return createHash("sha256").update(`poetsrooster:${purpose}:${password}`).digest("base64url");
 }
@@ -241,6 +246,9 @@ export async function createAppServer(options = {}) {
   const distDirectory = options.distDirectory ?? defaultDistDirectory;
   const adminPassword = options.adminPassword ?? process.env.SCHOOL_ADMIN_PASSWORD ?? "";
   const accessPassword = options.accessPassword ?? process.env.ACCESS_PASSWORD ?? "";
+  const feedbackWhatsappNumber = normalizeFeedbackWhatsappNumber(
+    options.feedbackWhatsappNumber ?? process.env.FEEDBACK_WHATSAPP_NUMBER ?? "",
+  );
   const store = await createSchoolExceptionStore(dataDirectory);
 
   return createHttpServer(async (request, response) => {
@@ -291,6 +299,10 @@ export async function createAppServer(options = {}) {
         }
         return;
       }
+      if (pathname === "/api/config" && request.method === "GET") {
+        json(response, 200, { feedbackWhatsappNumber });
+        return;
+      }
       if (pathname === "/api/school-exceptions" && request.method === "GET") {
         json(response, 200, await store.load());
         return;
@@ -335,6 +347,7 @@ const isMainModule = process.argv[1] && import.meta.url === pathToFileURL(resolv
 if (isMainModule) {
   const port = Number(process.env.PORT || 3000);
   const accessPassword = process.env.ACCESS_PASSWORD ?? "";
+  const rawFeedbackWhatsappNumber = process.env.FEEDBACK_WHATSAPP_NUMBER ?? "";
   const server = await createAppServer();
   server.listen(port, "0.0.0.0", () => {
     console.log(`Poetsrooster luistert op poort ${port}`);
@@ -342,6 +355,9 @@ if (isMainModule) {
       console.log(`Unieke toegangsroute: /toegang/${createAccessLinkToken(accessPassword)}`);
     } else {
       console.warn("ACCESS_PASSWORD ontbreekt; de app blijft gesloten totdat dit is ingesteld.");
+    }
+    if (rawFeedbackWhatsappNumber && !normalizeFeedbackWhatsappNumber(rawFeedbackWhatsappNumber)) {
+      console.warn("FEEDBACK_WHATSAPP_NUMBER heeft niet het verwachte formaat 31612345678; de feedbackknop is verborgen.");
     }
   });
 }

@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
+import writeExcelFile from "write-excel-file/node";
 import type { ScheduleSettings, Student } from "../types";
 import { generateSchedule } from "../utils/schedule";
-import { buildPrintedOnLabel, buildScheduleTitle, buildScheduleTsv, createSchedulePdf } from "./export";
+import {
+  buildPrintedOnLabel,
+  buildScheduleExcelData,
+  buildScheduleTitle,
+  buildScheduleTsv,
+  createSchedulePdf,
+} from "./export";
 
 const settings: ScheduleSettings = {
   className: "Groep 7B",
@@ -55,10 +62,29 @@ describe("schedule export", () => {
     expect(text).toContain("--\t--\therfstvakantie");
   });
 
+  it("maakt een geldig en opgemaakt Excel-bestand", async () => {
+    const data = buildScheduleExcelData(settings, filledSchedule(), students, new Date(2026, 7, 21, 12));
+    expect(data[0][0]).toMatchObject({ value: "Poetsrooster Groep 7B", columnSpan: 4 });
+    expect(data[2][0]).toMatchObject({ value: "Gemaakt op 21-08-2026" });
+    expect(data[3].map((cell) => cell && typeof cell === "object" && "value" in cell ? cell.value : cell))
+      .toEqual(["Week van", "Woensdag", "Vrijdag", "Opmerkingen"]);
+    expect(data[4][0]).toMatchObject({ value: expect.any(Date), format: "dd-mm-yyyy" });
+    expect(data[5][1]).toMatchObject({ backgroundColor: "#F2F2F2" });
+
+    const buffer = await writeExcelFile(data, {
+      sheet: "Poetsrooster",
+      columns: [{ width: 14 }, { width: 25 }, { width: 25 }, { width: 44 }],
+      stickyRowsCount: 4,
+      showGridLines: false,
+    }).toBuffer();
+    expect(buffer.subarray(0, 2).toString()).toBe("PK");
+    expect(buffer.byteLength).toBeGreaterThan(3_000);
+  });
+
   it("maakt het volledige schooljaar als één A4 portrait PDF", async () => {
     const pdf = await createSchedulePdf(settings, filledSchedule(), students);
     expect(pdf.getNumberOfPages()).toBe(1);
     expect(pdf.internal.pageSize.getWidth()).toBeLessThan(pdf.internal.pageSize.getHeight());
     expect(pdf.output("arraybuffer").byteLength).toBeGreaterThan(2_000);
-  });
+  }, 60_000);
 });

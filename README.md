@@ -22,7 +22,7 @@ Maak voor centraal schoolbeheer eerst een lokaal configuratiebestand:
 cp .env.example .env
 ```
 
-Vervang in `.env` beide voorbeelden door sterke, verschillende wachtwoorden. `ACCESS_PASSWORD` beschermt de hele website; `SCHOOL_ADMIN_PASSWORD` is alleen nodig om schoolbrede dagen te wijzigen.
+Vervang in `.env` beide wachtwoordvoorbeelden door sterke, verschillende wachtwoorden. `ACCESS_PASSWORD` beschermt de hele website; `SCHOOL_ADMIN_PASSWORD` is alleen nodig om schoolbrede dagen te wijzigen. Stel optioneel `FEEDBACK_WHATSAPP_NUMBER=31612345678` in om de feedbackknop te tonen.
 
 Tests en productiebuild:
 
@@ -52,9 +52,10 @@ De schoolbrede kalender wordt als JSON bewaard in het permanente Docker-volume `
 
 ## Exporteren
 
-Zodra een rooster is gegenereerd, staan bovenaan drie exportacties:
+Zodra een rooster is gegenereerd, staan bovenaan vier exportacties:
 
 - `Rooster kopiëren (bv. voor Excel)` zet het rooster als tabgescheiden tekst op het klembord, geschikt voor Excel, Google Sheets, Word en e-mail;
+- `Excel downloaden` maakt een opgemaakt `.xlsx`-bestand met vaste kopregels en afwisselende grijstinten;
 - `PDF downloaden` maakt direct een A4-portrait PDF van één pagina;
 - `Printen` opent het afdrukvenster van de browser.
 

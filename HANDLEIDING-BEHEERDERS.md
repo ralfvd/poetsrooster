@@ -15,9 +15,11 @@ Open daarna `.env` en vervang de voorbeeldwaarde door een sterk, uniek wachtwoor
 ```text
 SCHOOL_ADMIN_PASSWORD=zet-hier-een-sterk-uniek-wachtwoord
 ACCESS_PASSWORD=zet-hier-een-ander-sterk-uniek-wachtwoord
+FEEDBACK_WHATSAPP_NUMBER=
 ```
 
 `ACCESS_PASSWORD` beschermt de volledige website. `SCHOOL_ADMIN_PASSWORD` is een extra beheerderswachtwoord voor het wijzigen van de centrale schoolkalender.
+`FEEDBACK_WHATSAPP_NUMBER` is optioneel en toont de knop **Feedback via WhatsApp**. Gebruik het internationale formaat zonder `+`, spaties of streepjes, bijvoorbeeld `31612345678`. Laat de waarde leeg om de knop te verbergen.
 
 Bewaar `.env` alleen op de server. Deel `SCHOOL_ADMIN_PASSWORD` uitsluitend met schoolbeheerders; geef ouders bij voorkeur de unieke toegangslink in plaats van het losse `ACCESS_PASSWORD`. Start vervolgens de app:
 
@@ -40,6 +42,8 @@ docker compose logs --tail=30
 Zoek naar `Unieke toegangsroute`, plak het getoonde pad achter het serveradres en deel die volledige link alleen met bevoegde ouders. Het wachtwoord zelf staat niet in de link. Na één bezoek werkt ook de gewone basislink in dezelfde browser.
 
 Als `ACCESS_PASSWORD` wordt gewijzigd, worden bestaande cookies en de oude unieke link automatisch ongeldig. Maak de container daarna opnieuw aan met `docker compose up -d --force-recreate`.
+
+Na een wijziging van `FEEDBACK_WHATSAPP_NUMBER` moet de container eveneens opnieuw worden aangemaakt met `docker compose up -d --force-recreate`; opnieuw bouwen is niet nodig.
 
 ## Schoolbrede vrije dagen beheren
 

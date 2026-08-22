@@ -9,6 +9,7 @@ services:
     environment:
       SCHOOL_ADMIN_PASSWORD: ${SCHOOL_ADMIN_PASSWORD:-}
       ACCESS_PASSWORD: ${ACCESS_PASSWORD:-}
+      FEEDBACK_WHATSAPP_NUMBER: ${FEEDBACK_WHATSAPP_NUMBER:-}
     volumes:
       - poetsrooster-data:/app/data
     restart: unless-stopped

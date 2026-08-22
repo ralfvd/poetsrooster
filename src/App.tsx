@@ -8,8 +8,15 @@ import { ScheduleTable } from "./components/ScheduleTable";
 import { SchoolExceptionEditor } from "./components/SchoolExceptionEditor";
 import { Statistics } from "./components/Statistics";
 import { WarningPanel } from "./components/WarningPanel";
-import { buildPrintedOnLabel, buildScheduleTitle, copyScheduleToClipboard, downloadSchedulePdf } from "./services/export";
+import {
+  buildPrintedOnLabel,
+  buildScheduleTitle,
+  copyScheduleToClipboard,
+  downloadScheduleExcel,
+  downloadSchedulePdf,
+} from "./services/export";
 import { optimizeSchedule } from "./services/optimizer";
+import { buildWhatsappFeedbackUrl, loadRuntimeConfig } from "./services/runtimeConfig";
 import { loadSchoolExceptions } from "./services/schoolExceptions";
 import { LocalStorageProvider } from "./services/storage";
 import type {
@@ -46,14 +53,22 @@ export default function App() {
   const [exportMessage, setExportMessage] = useState("");
   const [schoolFile, setSchoolFile] = useState<SchoolExceptionFile>(emptySchoolFile);
   const [schoolLoadError, setSchoolLoadError] = useState("");
+  const [feedbackWhatsappNumber, setFeedbackWhatsappNumber] = useState("");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    Promise.allSettled([storage.load(), loadSchoolExceptions()]).then(([savedResult, schoolResult]) => {
+    Promise.allSettled([storage.load(), loadSchoolExceptions(), loadRuntimeConfig()]).then(([
+      savedResult,
+      schoolResult,
+      configResult,
+    ]) => {
       const saved = savedResult.status === "fulfilled" ? savedResult.value : null;
       const loadedSchoolFile = schoolResult.status === "fulfilled" ? schoolResult.value : emptySchoolFile;
       const baseState = saved ?? defaultState;
       setSchoolFile(loadedSchoolFile);
+      if (configResult.status === "fulfilled") {
+        setFeedbackWhatsappNumber(configResult.value.feedbackWhatsappNumber);
+      }
       if (schoolResult.status === "rejected") {
         setSchoolLoadError("De centrale schoolkalender kon niet worden geladen.");
       }
@@ -283,6 +298,17 @@ export default function App() {
     window.setTimeout(() => setExportMessage(""), 2500);
   };
 
+  const downloadExcel = async () => {
+    setExportMessage("Excel maken…");
+    try {
+      await downloadScheduleExcel(state.settings, state.schedule, state.students);
+      setExportMessage("Excel gedownload");
+    } catch {
+      setExportMessage("Excel maken mislukt");
+    }
+    window.setTimeout(() => setExportMessage(""), 2500);
+  };
+
   if (!ready) return <div className="loading">Rooster laden…</div>;
 
   return (
@@ -307,6 +333,14 @@ export default function App() {
             onClick={() => void copySchedule()}
           >
             Rooster kopiëren (bv. voor Excel)
+          </button>
+          <button
+            className="button ghost"
+            type="button"
+            disabled={state.schedule.length === 0}
+            onClick={() => void downloadExcel()}
+          >
+            Excel downloaden
           </button>
           <button
             className="button ghost"
@@ -380,6 +414,16 @@ export default function App() {
           <Statistics students={state.students} schedule={state.schedule} weekdays={state.settings.cleaningWeekdays} />
         </div>
       </main>
+      {feedbackWhatsappNumber && (
+        <a
+          className="feedback-button no-print"
+          href={buildWhatsappFeedbackUrl(feedbackWhatsappNumber)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Feedback via WhatsApp
+        </a>
+      )}
       <div className="version-badge no-print" title="Git-revisie">
         {__APP_REVISION__}
       </div>
