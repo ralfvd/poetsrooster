@@ -61,6 +61,7 @@ function loginPage(message = "", configured = true) {
     main { width: min(100%, 390px); padding: 2rem; border: 1px solid #dedbd2; border-radius: 18px; background: #fffdf8; box-shadow: 0 16px 45px rgb(40 55 51 / 10%); }
     h1 { margin: 0 0 .5rem; font-family: Georgia, serif; font-size: 2rem; }
     p { margin: 0 0 1.2rem; color: #65716e; line-height: 1.45; }
+    .tagline { margin-bottom: 1.5rem; color: #165c56; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
     .notice { padding: .7rem; border-radius: 8px; color: #7b342c; background: #f7e2de; font-size: .85rem; }
     label { display: grid; gap: .45rem; font-size: .85rem; font-weight: 700; }
     input { width: 100%; padding: .75rem; border: 1px solid #b8c9c5; border-radius: 9px; font: inherit; }
@@ -70,6 +71,7 @@ function loginPage(message = "", configured = true) {
 <body>
   <main>
     <h1>Poetsrooster</h1>
+    <p class="tagline">Eerlijk verdeeld, slim geregeld</p>
     <p>Vul het toegangswachtwoord in om verder te gaan.</p>
     ${notice ? `<p class="notice" role="alert">${notice}</p>` : ""}
     ${configured ? `<form method="post" action="/api/access/login">

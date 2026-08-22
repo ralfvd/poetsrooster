@@ -54,7 +54,7 @@ De schoolbrede kalender wordt als JSON bewaard in het permanente Docker-volume `
 
 Zodra een rooster is gegenereerd, staan bovenaan drie exportacties:
 
-- `Rooster kopiëren` zet het rooster als tabgescheiden tekst op het klembord, geschikt voor Excel, Google Sheets, Word en e-mail;
+- `Rooster kopiëren (bv. voor Excel)` zet het rooster als tabgescheiden tekst op het klembord, geschikt voor Excel, Google Sheets, Word en e-mail;
 - `PDF downloaden` maakt direct een A4-portrait PDF van één pagina;
 - `Printen` opent het afdrukvenster van de browser.
 

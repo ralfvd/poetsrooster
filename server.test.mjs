@@ -75,7 +75,9 @@ describe("toegangsbeveiliging", () => {
 
       const loginPage = await fetch(baseUrl);
       expect(loginPage.status).toBe(200);
-      expect(await loginPage.text()).toContain("Vul het toegangswachtwoord in");
+      const loginHtml = await loginPage.text();
+      expect(loginHtml).toContain("Eerlijk verdeeld, slim geregeld");
+      expect(loginHtml).toContain("Vul het toegangswachtwoord in");
 
       const blockedApi = await fetch(`${baseUrl}/api/school-exceptions`);
       expect(blockedApi.status).toBe(401);

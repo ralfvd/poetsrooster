@@ -290,7 +290,7 @@ export default function App() {
       <header className="app-header">
         <div className="brand-mark" aria-hidden="true">P</div>
         <div>
-          <p className="eyebrow">Eerlijk verdeeld, rustig geregeld</p>
+          <p className="eyebrow">Eerlijk verdeeld, slim geregeld</p>
           <h1>
             <span className="no-print">{state.settings.className || "Poetsrooster"}</span>
             <span className="print-only">{buildScheduleTitle(state.settings.className)}</span>
@@ -306,7 +306,7 @@ export default function App() {
             disabled={state.schedule.length === 0}
             onClick={() => void copySchedule()}
           >
-            Rooster kopiëren
+            Rooster kopiëren (bv. voor Excel)
           </button>
           <button
             className="button ghost"
