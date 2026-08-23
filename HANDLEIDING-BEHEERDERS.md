@@ -68,7 +68,7 @@ De opgeslagen schoolkalender blijft hierbij behouden.
 
 Bij **Back-up & import** kunnen ouders hun volledige bewerkbare rooster optioneel op de server bewaren. Zij gebruiken daarvoor hun voornaam en een wachtwoord van minimaal 8 tekens, dat bij het opslaan tweemaal moet worden ingevuld. Met dezelfde combinatie kan het rooster later op een ander apparaat worden opgehaald.
 
-- Een bestaande combinatie wordt nooit overschreven.
+- Dezelfde combinatie van voornaam en wachtwoord werkt de bestaande serverback-up bij, zodat er geen dubbele records ontstaan.
 - De voornaam is niet hoofdlettergevoelig: `Ralf` en `ralf` gelden als dezelfde naam.
 - Dezelfde voornaam met een ander wachtwoord mag wel bestaan.
 - Wachtwoorden worden niet opgeslagen en kunnen niet worden hersteld.

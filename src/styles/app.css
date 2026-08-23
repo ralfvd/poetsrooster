@@ -93,6 +93,8 @@ table { width: 100%; border-collapse: collapse; }
 .editor-table input { min-width: 92px; padding: .48rem; }
 .editor-table input[type="number"] { min-width: 62px; width: 62px; }
 .editor-table input[type="checkbox"] { min-width: auto; width: 1.15rem; height: 1.15rem; accent-color: var(--brand); }
+.student-name-cell.has-error input { border-color: var(--danger); background: #fff7f5; }
+.field-error { display: block; margin-top: .25rem; color: var(--danger); font-size: .65rem; font-weight: 700; line-height: 1.25; }
 .editor-table .number-column { width: 74px; }
 .editor-table .check-column { width: 34px; text-align: center; }
 .check-cell { text-align: center; }

@@ -45,10 +45,12 @@ export function RosterBackup({ state, onImport }: Props) {
     }
     setSaving(true);
     try {
-      await saveRosterToServer(saveParentName, savePassword, savePasswordConfirmation, state);
+      const result = await saveRosterToServer(saveParentName, savePassword, savePasswordConfirmation, state);
       setSavePassword("");
       setSavePasswordConfirmation("");
-      setServerMessage("Serverback-up opgeslagen. Bewaar uw voornaam en wachtwoord goed; deze kunnen niet worden hersteld.");
+      setServerMessage(result.updated
+        ? "Bestaande serverback-up bijgewerkt met de nieuwste gegevens."
+        : "Nieuwe serverback-up opgeslagen. Bewaar uw voornaam en wachtwoord goed; deze kunnen niet worden hersteld.");
     } catch (error) {
       setServerMessage(error instanceof Error ? error.message : "Opslaan op de server is mislukt.");
     } finally {
@@ -105,10 +107,10 @@ export function RosterBackup({ state, onImport }: Props) {
         <div className="server-roster-content">
           <p className="panel-help">
             Bewaar het volledige rooster versleuteld op de server. Uw voornaam en wachtwoord vormen samen de toegang.
-            Een bestaande combinatie wordt nooit overschreven.
+            Met een bestaande combinatie werkt u dezelfde serverback-up bij.
           </p>
           <form className="server-roster-form" onSubmit={(event) => void saveOnServer(event)}>
-            <h3>Nieuwe serverback-up opslaan</h3>
+            <h3>Serverback-up opslaan of bijwerken</h3>
             <label>
               Voornaam ouder
               <input

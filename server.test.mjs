@@ -114,7 +114,7 @@ describe("versleutelde ouderroosters", () => {
       .rejects.toMatchObject({ status: 401 });
   });
 
-  it("overschrijft een bestaande combinatie niet maar staat dezelfde voornaam met ander wachtwoord toe", async () => {
+  it("werkt een bestaande combinatie bij zonder dubbel record en staat een ander wachtwoord apart toe", async () => {
     const directory = await mkdtemp(join(tmpdir(), "poetsrooster-ouders-uniek-"));
     temporaryDirectories.push(directory);
     const store = await createParentRosterStore(directory);
@@ -124,18 +124,28 @@ describe("versleutelde ouderroosters", () => {
       passwordConfirmation: "eerste-wachtwoord",
       state: parentRosterState,
     });
+    const updatedState = {
+      ...parentRosterState,
+      students: [
+        ...parentRosterState.students,
+        { id: "bram", name: "Bram", previousYearCount: 0, manualOnly: false, availableWeekdays: [3, 5] },
+      ],
+    };
     await expect(store.create({
       parentName: "sam",
       password: "eerste-wachtwoord",
       passwordConfirmation: "eerste-wachtwoord",
-      state: parentRosterState,
-    })).rejects.toMatchObject({ status: 409 });
+      state: updatedState,
+    })).resolves.toMatchObject({ updated: true });
+    await expect(store.load({ parentName: "Sam", password: "eerste-wachtwoord" }))
+      .resolves.toEqual(updatedState);
+    expect(JSON.parse(await readFile(join(directory, "ouderroosters.json"), "utf8")).records).toHaveLength(1);
     await expect(store.create({
       parentName: "Sam",
       password: "tweede-wachtwoord",
       passwordConfirmation: "tweede-wachtwoord",
       state: { ...parentRosterState, settings: { ...parentRosterState.settings, className: "Groep 8A" } },
-    })).resolves.toHaveProperty("createdAt");
+    })).resolves.toMatchObject({ updated: false });
     await expect(store.load({ parentName: "Sam", password: "tweede-wachtwoord" }))
       .resolves.toMatchObject({ settings: { className: "Groep 8A" } });
   });
@@ -216,17 +226,25 @@ describe("toegangsbeveiliging", () => {
       });
       expect(savedParentRoster.status).toBe(201);
 
-      const duplicateParentRoster = await fetch(`${baseUrl}/api/parent-rosters`, {
+      const updatedParentRosterState = {
+        ...parentRosterState,
+        students: [
+          ...parentRosterState.students,
+          { id: "bram", name: "Bram", previousYearCount: 0, manualOnly: false, availableWeekdays: [3, 5] },
+        ],
+      };
+      const updatedParentRoster = await fetch(`${baseUrl}/api/parent-rosters`, {
         method: "POST",
         headers: { Cookie: cookie.split(";")[0], "Content-Type": "application/json" },
         body: JSON.stringify({
           parentName: "ralf",
           password: "veilig-wachtwoord",
           passwordConfirmation: "veilig-wachtwoord",
-          state: parentRosterState,
+          state: updatedParentRosterState,
         }),
       });
-      expect(duplicateParentRoster.status).toBe(409);
+      expect(updatedParentRoster.status).toBe(200);
+      expect((await updatedParentRoster.json()).updated).toBe(true);
 
       const loadedParentRoster = await fetch(`${baseUrl}/api/parent-rosters/load`, {
         method: "POST",
@@ -234,7 +252,7 @@ describe("toegangsbeveiliging", () => {
         body: JSON.stringify({ parentName: "Ralf", password: "veilig-wachtwoord" }),
       });
       expect(loadedParentRoster.status).toBe(200);
-      expect((await loadedParentRoster.json()).state).toEqual(parentRosterState);
+      expect((await loadedParentRoster.json()).state).toEqual(updatedParentRosterState);
 
       const wrongAdminUnlock = await fetch(`${baseUrl}/api/school-exceptions/unlock`, {
         method: "POST",

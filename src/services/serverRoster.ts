@@ -10,6 +10,10 @@ export class ServerRosterError extends Error {
   }
 }
 
+export type ServerRosterSaveResult = {
+  updated: boolean;
+};
+
 async function responseBody(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -29,7 +33,7 @@ export async function saveRosterToServer(
   password: string,
   passwordConfirmation: string,
   state: PersistedState,
-): Promise<void> {
+): Promise<ServerRosterSaveResult> {
   const response = await fetch("/api/parent-rosters", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -39,6 +43,9 @@ export async function saveRosterToServer(
   if (!response.ok) {
     throw new ServerRosterError(response.status, errorMessage(body, "Opslaan op de server is mislukt."));
   }
+  return {
+    updated: Boolean(body && typeof body === "object" && "updated" in body && body.updated === true),
+  };
 }
 
 export async function loadRosterFromServer(parentName: string, password: string): Promise<PersistedState> {

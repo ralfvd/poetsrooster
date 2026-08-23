@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Student, Weekday } from "../types";
 import { weekdayLabel } from "../utils/dates";
 import { createId } from "../utils/id";
+import { duplicateStudentNameIds } from "../utils/students";
 
 type Props = {
   students: Student[];
@@ -37,6 +38,7 @@ export function setStudentManualOnly(student: Student, manualOnly: boolean): Stu
 
 export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
   const [desiredCount, setDesiredCount] = useState(students.length ? String(students.length) : "");
+  const duplicateNameIds = duplicateStudentNameIds(students);
 
   useEffect(() => {
     setDesiredCount(students.length ? String(students.length) : "");
@@ -122,15 +124,21 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
             </tr>
           </thead>
           <tbody>
-            {students.map((student, studentIndex) => (
-              <tr key={student.id}>
-                <td>
+            {students.map((student, studentIndex) => {
+              const duplicateName = duplicateNameIds.has(student.id);
+              const nameErrorId = `student-name-error-${studentIndex}`;
+              return (
+                <tr key={student.id}>
+                <td className={duplicateName ? "student-name-cell has-error" : "student-name-cell"}>
                   <input
                     aria-label="Naam leerling"
+                    aria-invalid={duplicateName}
+                    aria-describedby={duplicateName ? nameErrorId : undefined}
                     placeholder={`Leerling ${studentIndex + 1}`}
                     value={student.name}
                     onChange={(event) => updateStudent(student.id, { name: event.target.value })}
                   />
+                  {duplicateName && <span className="field-error" id={nameErrorId}>Deze naam is al ingevuld.</span>}
                 </td>
                 <td>
                   <input
@@ -180,8 +188,9 @@ export function ClassEditor({ students, weekdays, onChange, onRemove }: Props) {
                     ×
                   </button>
                 </td>
-              </tr>
-            ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

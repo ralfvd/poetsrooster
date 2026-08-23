@@ -290,6 +290,7 @@ function validateParentRosterFile(input) {
   for (const record of input.records) {
     if (!record || typeof record !== "object" || typeof record.id !== "string" ||
         typeof record.nameKey !== "string" || typeof record.createdAt !== "string" ||
+        (record.updatedAt !== undefined && typeof record.updatedAt !== "string") ||
         typeof record.salt !== "string" || typeof record.iv !== "string" ||
         typeof record.authTag !== "string" || typeof record.ciphertext !== "string") {
       throw new Error("Een opgeslagen ouderrooster is ongeldig.");
@@ -312,6 +313,11 @@ export async function createParentRosterStore(dataDirectory = defaultDataDirecto
     pendingOperation = result.catch(() => undefined);
     return result;
   };
+  const saveFile = async (file) => {
+    const temporaryFile = `${dataFile}.tmp`;
+    await writeFile(temporaryFile, JSON.stringify(file, null, 2), { mode: 0o600 });
+    await rename(temporaryFile, dataFile);
+  };
 
   return {
     create(input) {
@@ -331,16 +337,18 @@ export async function createParentRosterStore(dataDirectory = defaultDataDirecto
         }
         for (const record of sameName) {
           if (await tryDecryptParentRoster(record, password)) {
-            throw new ParentRosterError(409, "Deze combinatie van voornaam en wachtwoord bestaat al. Er is niets overschreven.");
+            const encrypted = await encryptParentRoster(state, password, nameKey);
+            const updatedAt = new Date().toISOString();
+            Object.assign(record, { updatedAt, ...encrypted });
+            await saveFile(file);
+            return { createdAt: record.createdAt, updatedAt, updated: true };
           }
         }
         const encrypted = await encryptParentRoster(state, password, nameKey);
         const createdAt = new Date().toISOString();
-        file.records.push({ id: randomUUID(), nameKey, createdAt, ...encrypted });
-        const temporaryFile = `${dataFile}.tmp`;
-        await writeFile(temporaryFile, JSON.stringify(file, null, 2), { mode: 0o600 });
-        await rename(temporaryFile, dataFile);
-        return { createdAt };
+        file.records.push({ id: randomUUID(), nameKey, createdAt, updatedAt: createdAt, ...encrypted });
+        await saveFile(file);
+        return { createdAt, updatedAt: createdAt, updated: false };
       });
     },
     load(input) {
@@ -603,7 +611,8 @@ export async function createAppServer(options = {}) {
       }
       if (pathname === "/api/parent-rosters" && request.method === "POST") {
         consumeRateLimit(parentRosterSaveAttempts, request.socket.remoteAddress ?? "onbekend", 20, 60 * 60 * 1000);
-        json(response, 201, await parentRosterStore.create(await readBody(request, 2_500_000)));
+        const saved = await parentRosterStore.create(await readBody(request, 2_500_000));
+        json(response, saved.updated ? 200 : 201, saved);
         return;
       }
       if (pathname === "/api/parent-rosters/load" && request.method === "POST") {

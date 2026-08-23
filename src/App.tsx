@@ -29,7 +29,7 @@ import type {
 import { formatLongDate } from "./utils/dates";
 import { mergeExclusions } from "./utils/exclusions";
 import { activeSlotCount, filledSlotCount, generateSchedule } from "./utils/schedule";
-import { needsAvailabilityWarning } from "./utils/students";
+import { duplicateStudentNameIds, needsAvailabilityWarning } from "./utils/students";
 
 const storage = new LocalStorageProvider();
 const emptySchoolFile: SchoolExceptionFile = { version: 1, updatedAt: null, exceptions: [] };
@@ -102,8 +102,7 @@ export default function App() {
     if (state.settings.endDate < state.settings.startDate) issues.push("De einddatum moet na de startdatum liggen.");
     if (state.settings.cleaningWeekdays.length === 0) issues.push("Kies minimaal één poetsdag.");
     if (state.students.length === 0) issues.push("Voeg minimaal één leerling toe.");
-    const names = state.students.map((student) => student.name.trim().toLocaleLowerCase("nl")).filter(Boolean);
-    if (new Set(names).size !== names.length) issues.push("Iedere leerling moet een unieke naam hebben.");
+    if (duplicateStudentNameIds(state.students).size) issues.push("Iedere leerling moet een unieke naam hebben.");
     const unavailable = state.students.filter(
       (student) =>
         !student.manualOnly &&
@@ -192,7 +191,8 @@ export default function App() {
     const blockingWarnings = validationWarnings.filter((warning) =>
       warning.startsWith("De einddatum") ||
       warning.startsWith("Kies minimaal") ||
-      warning.startsWith("Voeg minimaal"),
+      warning.startsWith("Voeg minimaal") ||
+      warning.startsWith("Iedere leerling"),
     );
     if (blockingWarnings.length || state.schedule.length === 0) {
       setWarnings(state.schedule.length === 0 ? ["Genereer eerst de poetsdagen.", ...blockingWarnings] : blockingWarnings);
