@@ -76,7 +76,7 @@ Met `JSON exporteren` maak je een back-up. Met `JSON importeren` laad je zo'n ba
 
 Bij `Back-up & import` kan een gebruiker het volledige poetsrooster downloaden. Dit JSON-bestand bevat de klasinstellingen, leerlingen, klasuitzonderingen en alle automatische en handmatige toewijzingen. Kies op een andere computer `Back-up importeren` om ermee verder te werken. De actuele centrale schoolkalender wordt na het importeren automatisch toegepast.
 
-Als alternatief kan een ouder het onderdeel uitklappen en een versleutelde serverback-up maken. De combinatie van de voornaam van de ouder en een wachtwoord van minimaal 10 tekens geeft later weer toegang. Bij het opslaan moet het wachtwoord tweemaal worden ingevuld. Een bestaande combinatie wordt geweigerd en nooit overschreven; dezelfde voornaam met een ander wachtwoord is wel toegestaan. De server bewaart geen leesbaar wachtwoord en versleutelt de volledige roosterinhoud. Gebruik deze functie via internet uitsluitend achter HTTPS.
+Als alternatief kan een ouder het onderdeel uitklappen en een versleutelde serverback-up maken. De combinatie van de voornaam van de ouder en een wachtwoord van minimaal 8 tekens geeft later weer toegang. Bij het opslaan moet het wachtwoord tweemaal worden ingevuld. Een bestaande combinatie wordt geweigerd en nooit overschreven; dezelfde voornaam met een ander wachtwoord is wel toegestaan. De server bewaart geen leesbaar wachtwoord en versleutelt de volledige roosterinhoud. Gebruik deze functie via internet uitsluitend achter HTTPS.
 
 ## Bijwerken op de server
 

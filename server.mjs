@@ -132,8 +132,8 @@ export function normalizeParentName(value) {
 }
 
 function validateParentPassword(password, confirmation) {
-  if (typeof password !== "string" || password.length < 10 || password.length > 128) {
-    throw new ParentRosterError(400, "Gebruik een wachtwoord van minimaal 10 en maximaal 128 tekens.");
+  if (typeof password !== "string" || password.length < 8 || password.length > 128) {
+    throw new ParentRosterError(400, "Gebruik een wachtwoord van minimaal 8 en maximaal 128 tekens.");
   }
   if (confirmation !== undefined && password !== confirmation) {
     throw new ParentRosterError(400, "De twee wachtwoorden zijn niet hetzelfde.");

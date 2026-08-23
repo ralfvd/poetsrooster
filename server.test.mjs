@@ -88,21 +88,27 @@ describe("versleutelde ouderroosters", () => {
     const directory = await mkdtemp(join(tmpdir(), "poetsrooster-ouders-"));
     temporaryDirectories.push(directory);
     const store = await createParentRosterStore(directory);
+    await expect(store.create({
+      parentName: "Ralf",
+      password: "kort123",
+      passwordConfirmation: "kort123",
+      state: parentRosterState,
+    })).rejects.toMatchObject({ status: 400 });
     await store.create({
       parentName: "Ralf",
-      password: "veilig-wachtwoord",
-      passwordConfirmation: "veilig-wachtwoord",
+      password: "acht1234",
+      passwordConfirmation: "acht1234",
       state: parentRosterState,
     });
 
     const rawFile = await readFile(join(directory, "ouderroosters.json"), "utf8");
     expect(rawFile).not.toContain("Ralf");
-    expect(rawFile).not.toContain("veilig-wachtwoord");
+    expect(rawFile).not.toContain("acht1234");
     expect(rawFile).not.toContain("Anna");
     expect(rawFile).not.toContain("Groep 7B");
 
     const restartedStore = await createParentRosterStore(directory);
-    await expect(restartedStore.load({ parentName: "ralf", password: "veilig-wachtwoord" }))
+    await expect(restartedStore.load({ parentName: "ralf", password: "acht1234" }))
       .resolves.toEqual(parentRosterState);
     await expect(restartedStore.load({ parentName: "Ralf", password: "verkeerd-wachtwoord" }))
       .rejects.toMatchObject({ status: 401 });

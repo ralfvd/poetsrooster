@@ -125,20 +125,20 @@ export function RosterBackup({ state, onImport }: Props) {
               <input
                 type="password"
                 value={savePassword}
-                minLength={10}
+                minLength={8}
                 maxLength={128}
                 autoComplete="new-password"
                 required
                 onChange={(event) => setSavePassword(event.target.value)}
               />
-              <span className="field-help">Minimaal 10 tekens. Dit wachtwoord kan niet worden hersteld.</span>
+              <span className="field-help">Minimaal 8 tekens. Dit wachtwoord kan niet worden hersteld.</span>
             </label>
             <label>
               Wachtwoord herhalen
               <input
                 type="password"
                 value={savePasswordConfirmation}
-                minLength={10}
+                minLength={8}
                 maxLength={128}
                 autoComplete="new-password"
                 required
@@ -168,7 +168,7 @@ export function RosterBackup({ state, onImport }: Props) {
               <input
                 type="password"
                 value={loadPassword}
-                minLength={10}
+                minLength={8}
                 maxLength={128}
                 autoComplete="current-password"
                 required
