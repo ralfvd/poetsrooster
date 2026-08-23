@@ -1,13 +1,24 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+  randomUUID,
+  scrypt as scryptCallback,
+  timingSafeEqual,
+} from "node:crypto";
 import { createReadStream } from "node:fs";
 import { access, mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
 import { extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 
 const currentDirectory = fileURLToPath(new URL(".", import.meta.url));
 const defaultDataDirectory = join(currentDirectory, "data");
 const defaultDistDirectory = join(currentDirectory, "dist");
+const scrypt = promisify(scryptCallback);
+const maximumParentRosters = 500;
 
 const mimeTypes = {
   ".css": "text/css; charset=utf-8",
@@ -88,6 +99,272 @@ function validDate(value) {
   return new Date(`${value}T00:00:00.000Z`).toISOString().slice(0, 10) === value;
 }
 
+function object(value, message) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new ParentRosterError(400, message);
+  return value;
+}
+
+function validWeekday(value) {
+  return Number.isInteger(value) && value >= 1 && value <= 7;
+}
+
+function limitedString(value, maximumLength, message, allowEmpty = false) {
+  if (typeof value !== "string" || value.length > maximumLength || (!allowEmpty && !value.trim())) {
+    throw new ParentRosterError(400, message);
+  }
+  return value;
+}
+
+export class ParentRosterError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
+export function normalizeParentName(value) {
+  if (typeof value !== "string") throw new ParentRosterError(400, "Vul de voornaam van de ouder in.");
+  const name = value.normalize("NFKC").trim().replace(/\s+/g, " ");
+  if (!name || name.length > 60 || !/^[\p{L}\p{M}][\p{L}\p{M} .'’-]*$/u.test(name)) {
+    throw new ParentRosterError(400, "Vul een geldige voornaam van maximaal 60 tekens in.");
+  }
+  return name;
+}
+
+function validateParentPassword(password, confirmation) {
+  if (typeof password !== "string" || password.length < 10 || password.length > 128) {
+    throw new ParentRosterError(400, "Gebruik een wachtwoord van minimaal 10 en maximaal 128 tekens.");
+  }
+  if (confirmation !== undefined && password !== confirmation) {
+    throw new ParentRosterError(400, "De twee wachtwoorden zijn niet hetzelfde.");
+  }
+  return password;
+}
+
+export function validateParentRosterState(input) {
+  const state = object(input, "De roostergegevens ontbreken of zijn ongeldig.");
+  if (state.version !== 1) throw new ParentRosterError(400, "Deze versie van de roostergegevens wordt niet ondersteund.");
+  const settings = object(state.settings, "De planning is ongeldig.");
+  if (!validDate(settings.startDate) || !validDate(settings.endDate) || settings.endDate < settings.startDate ||
+      !Array.isArray(settings.cleaningWeekdays) || !settings.cleaningWeekdays.every(validWeekday) ||
+      !Number.isInteger(settings.studentsPerCleaningDay) ||
+      settings.studentsPerCleaningDay < 1 || settings.studentsPerCleaningDay > 20) {
+    throw new ParentRosterError(400, "De planning is ongeldig.");
+  }
+  const className = limitedString(settings.className, 100, "De klasnaam is te lang.", true);
+  if (!Array.isArray(state.students) || state.students.length > 500 ||
+      !Array.isArray(state.excludedDates) || state.excludedDates.length > 1000 ||
+      !Array.isArray(state.schedule) || state.schedule.length > 1000) {
+    throw new ParentRosterError(400, "De roostergegevens zijn te groot of ongeldig.");
+  }
+
+  const students = state.students.map((value) => {
+    const student = object(value, "Een leerling is ongeldig.");
+    const id = limitedString(student.id, 100, "Een leerling mist een geldig kenmerk.");
+    const name = limitedString(student.name, 100, "Een leerlingnaam is te lang.", true);
+    if (!Number.isInteger(student.previousYearCount) || student.previousYearCount < 0 ||
+        student.previousYearCount > 10_000 || typeof student.manualOnly !== "boolean" ||
+        !Array.isArray(student.availableWeekdays) || student.availableWeekdays.length > 7 ||
+        !student.availableWeekdays.every(validWeekday)) {
+      throw new ParentRosterError(400, "Een leerling bevat ongeldige gegevens.");
+    }
+    return {
+      id,
+      name,
+      previousYearCount: student.previousYearCount,
+      manualOnly: student.manualOnly,
+      availableWeekdays: [...new Set(student.availableWeekdays)],
+    };
+  });
+  const studentIds = new Set(students.map((student) => student.id));
+  if (studentIds.size !== students.length) throw new ParentRosterError(400, "Leerlingkenmerken moeten uniek zijn.");
+
+  const excludedDates = state.excludedDates.map((value) => {
+    const exclusion = object(value, "Een klasuitzondering is ongeldig.");
+    if (!validDate(exclusion.date)) throw new ParentRosterError(400, "Een klasuitzondering bevat geen geldige datum.");
+    return {
+      id: limitedString(exclusion.id, 100, "Een klasuitzondering mist een geldig kenmerk."),
+      date: exclusion.date,
+      reason: limitedString(exclusion.reason, 200, "Een klasuitzondering mist een geldige reden.").trim(),
+    };
+  });
+
+  const schedule = state.schedule.map((value) => {
+    const day = object(value, "Een poetsdag is ongeldig.");
+    if (!validDate(day.date) || !validWeekday(day.weekday) || typeof day.excluded !== "boolean" ||
+        !Array.isArray(day.assignments) || day.assignments.length > 20) {
+      throw new ParentRosterError(400, "Een poetsdag bevat ongeldige gegevens.");
+    }
+    const exclusionReason = day.exclusionReason === undefined
+      ? undefined
+      : limitedString(day.exclusionReason, 200, "Een poetsdag bevat een ongeldige reden.", true);
+    const assignments = day.assignments.map((value) => {
+      const assignment = object(value, "Een toewijzing is ongeldig.");
+      const studentId = assignment.studentId === null ? null : assignment.studentId;
+      if (studentId !== null && (typeof studentId !== "string" || !studentIds.has(studentId))) {
+        throw new ParentRosterError(400, "Een toewijzing verwijst naar een onbekende leerling.");
+      }
+      if (typeof assignment.locked !== "boolean" || ![null, "manual", "optimizer"].includes(assignment.source)) {
+        throw new ParentRosterError(400, "Een toewijzing bevat ongeldige gegevens.");
+      }
+      return { studentId, locked: assignment.locked, source: assignment.source };
+    });
+    return { date: day.date, weekday: day.weekday, excluded: day.excluded, exclusionReason, assignments };
+  });
+
+  const validated = {
+    version: 1,
+    settings: {
+      className,
+      startDate: settings.startDate,
+      endDate: settings.endDate,
+      cleaningWeekdays: [...new Set(settings.cleaningWeekdays)],
+      studentsPerCleaningDay: settings.studentsPerCleaningDay,
+    },
+    students,
+    excludedDates,
+    schedule,
+  };
+  if (Buffer.byteLength(JSON.stringify(validated)) > 2_000_000) {
+    throw new ParentRosterError(413, "De roostergegevens zijn te groot om op de server te bewaren.");
+  }
+  return validated;
+}
+
+function parentNameKey(parentName) {
+  return createHash("sha256").update(parentName.toLocaleLowerCase("nl")).digest("base64url");
+}
+
+async function deriveParentRosterKey(password, salt) {
+  return scrypt(password, salt, 32, { N: 16_384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 });
+}
+
+async function encryptParentRoster(state, password, nameKey) {
+  const salt = randomBytes(16);
+  const iv = randomBytes(12);
+  const key = await deriveParentRosterKey(password, salt);
+  try {
+    const cipher = createCipheriv("aes-256-gcm", key, iv);
+    cipher.setAAD(Buffer.from(`poetsrooster-ouderrooster:v1:${nameKey}`));
+    const ciphertext = Buffer.concat([cipher.update(JSON.stringify(state), "utf8"), cipher.final()]);
+    return {
+      salt: salt.toString("base64"),
+      iv: iv.toString("base64"),
+      authTag: cipher.getAuthTag().toString("base64"),
+      ciphertext: ciphertext.toString("base64"),
+    };
+  } finally {
+    key.fill(0);
+  }
+}
+
+async function decryptParentRoster(record, password) {
+  const key = await deriveParentRosterKey(password, Buffer.from(record.salt, "base64"));
+  try {
+    const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(record.iv, "base64"));
+    decipher.setAAD(Buffer.from(`poetsrooster-ouderrooster:v1:${record.nameKey}`));
+    decipher.setAuthTag(Buffer.from(record.authTag, "base64"));
+    const plaintext = Buffer.concat([
+      decipher.update(Buffer.from(record.ciphertext, "base64")),
+      decipher.final(),
+    ]).toString("utf8");
+    return validateParentRosterState(JSON.parse(plaintext));
+  } finally {
+    key.fill(0);
+  }
+}
+
+async function tryDecryptParentRoster(record, password) {
+  try {
+    return await decryptParentRoster(record, password);
+  } catch {
+    return null;
+  }
+}
+
+function validateParentRosterFile(input) {
+  if (!input || typeof input !== "object" || input.version !== 1 || !Array.isArray(input.records) ||
+      input.records.length > maximumParentRosters) {
+    throw new Error("Het bestand met ouderroosters is ongeldig.");
+  }
+  for (const record of input.records) {
+    if (!record || typeof record !== "object" || typeof record.id !== "string" ||
+        typeof record.nameKey !== "string" || typeof record.createdAt !== "string" ||
+        typeof record.salt !== "string" || typeof record.iv !== "string" ||
+        typeof record.authTag !== "string" || typeof record.ciphertext !== "string") {
+      throw new Error("Een opgeslagen ouderrooster is ongeldig.");
+    }
+  }
+  return input;
+}
+
+export async function createParentRosterStore(dataDirectory = defaultDataDirectory) {
+  const dataFile = join(dataDirectory, "ouderroosters.json");
+  await mkdir(resolve(dataFile, ".."), { recursive: true });
+  try {
+    await access(dataFile);
+  } catch {
+    await writeFile(dataFile, JSON.stringify({ version: 1, records: [] }, null, 2), { mode: 0o600 });
+  }
+  let pendingOperation = Promise.resolve();
+  const exclusive = (operation) => {
+    const result = pendingOperation.then(operation, operation);
+    pendingOperation = result.catch(() => undefined);
+    return result;
+  };
+
+  return {
+    create(input) {
+      return exclusive(async () => {
+        const request = object(input, "De gegevens voor de serverback-up ontbreken.");
+        const parentName = normalizeParentName(request.parentName);
+        const password = validateParentPassword(request.password, request.passwordConfirmation);
+        const state = validateParentRosterState(request.state);
+        const file = validateParentRosterFile(JSON.parse(await readFile(dataFile, "utf8")));
+        if (file.records.length >= maximumParentRosters) {
+          throw new ParentRosterError(507, "De server kan momenteel geen extra ouderroosters bewaren.");
+        }
+        const nameKey = parentNameKey(parentName);
+        const sameName = file.records.filter((record) => record.nameKey === nameKey);
+        if (sameName.length >= 25) {
+          throw new ParentRosterError(409, "Voor deze voornaam zijn te veel serverback-ups aanwezig. Kies een herkenbare toevoeging bij de voornaam.");
+        }
+        for (const record of sameName) {
+          if (await tryDecryptParentRoster(record, password)) {
+            throw new ParentRosterError(409, "Deze combinatie van voornaam en wachtwoord bestaat al. Er is niets overschreven.");
+          }
+        }
+        const encrypted = await encryptParentRoster(state, password, nameKey);
+        const createdAt = new Date().toISOString();
+        file.records.push({ id: randomUUID(), nameKey, createdAt, ...encrypted });
+        const temporaryFile = `${dataFile}.tmp`;
+        await writeFile(temporaryFile, JSON.stringify(file, null, 2), { mode: 0o600 });
+        await rename(temporaryFile, dataFile);
+        return { createdAt };
+      });
+    },
+    load(input) {
+      return exclusive(async () => {
+        const request = object(input, "Vul de voornaam en het wachtwoord in.");
+        const parentName = normalizeParentName(request.parentName);
+        const password = validateParentPassword(request.password);
+        const nameKey = parentNameKey(parentName);
+        const file = validateParentRosterFile(JSON.parse(await readFile(dataFile, "utf8")));
+        const sameName = file.records.filter((record) => record.nameKey === nameKey);
+        for (const record of sameName) {
+          const state = await tryDecryptParentRoster(record, password);
+          if (state) return state;
+        }
+        if (!sameName.length) {
+          const dummyKey = await deriveParentRosterKey(password, Buffer.alloc(16));
+          dummyKey.fill(0);
+        }
+        throw new ParentRosterError(401, "Geen serverback-up gevonden voor deze combinatie van voornaam en wachtwoord.");
+      });
+    },
+  };
+}
+
 export function validateSchoolExceptionFile(input) {
   if (!input || typeof input !== "object" || !Array.isArray(input.exceptions)) {
     throw new Error("Ongeldig JSON-bestand: 'exceptions' moet een lijst zijn.");
@@ -114,12 +391,12 @@ export function validateSchoolExceptionFile(input) {
   };
 }
 
-async function readBody(request) {
+async function readBody(request, maximumSize = 100_000) {
   const chunks = [];
   let size = 0;
   for await (const chunk of request) {
     size += chunk.length;
-    if (size > 100_000) throw new Error("Het JSON-bestand is te groot.");
+    if (size > maximumSize) throw new ParentRosterError(413, "Het JSON-bestand is te groot.");
     chunks.push(chunk);
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
@@ -134,6 +411,24 @@ async function readForm(request) {
     chunks.push(chunk);
   }
   return new URLSearchParams(Buffer.concat(chunks).toString("utf8"));
+}
+
+function consumeRateLimit(entries, key, limit, windowMilliseconds) {
+  const now = Date.now();
+  const current = entries.get(key);
+  if (!current || current.expiresAt <= now) {
+    entries.set(key, { count: 1, expiresAt: now + windowMilliseconds });
+  } else {
+    if (current.count >= limit) {
+      throw new ParentRosterError(429, "Te veel pogingen. Wacht even en probeer het later opnieuw.");
+    }
+    current.count += 1;
+  }
+  if (entries.size > 10_000) {
+    for (const [entryKey, entry] of entries) {
+      if (entry.expiresAt <= now) entries.delete(entryKey);
+    }
+  }
 }
 
 export function passwordMatches(received, expected) {
@@ -250,6 +545,9 @@ export async function createAppServer(options = {}) {
     options.feedbackWhatsappNumber ?? process.env.FEEDBACK_WHATSAPP_NUMBER ?? "",
   );
   const store = await createSchoolExceptionStore(dataDirectory);
+  const parentRosterStore = await createParentRosterStore(dataDirectory);
+  const parentRosterLoadAttempts = new Map();
+  const parentRosterSaveAttempts = new Map();
 
   return createHttpServer(async (request, response) => {
     try {
@@ -303,6 +601,16 @@ export async function createAppServer(options = {}) {
         json(response, 200, { feedbackWhatsappNumber });
         return;
       }
+      if (pathname === "/api/parent-rosters" && request.method === "POST") {
+        consumeRateLimit(parentRosterSaveAttempts, request.socket.remoteAddress ?? "onbekend", 20, 60 * 60 * 1000);
+        json(response, 201, await parentRosterStore.create(await readBody(request, 2_500_000)));
+        return;
+      }
+      if (pathname === "/api/parent-rosters/load" && request.method === "POST") {
+        consumeRateLimit(parentRosterLoadAttempts, request.socket.remoteAddress ?? "onbekend", 30, 10 * 60 * 1000);
+        json(response, 200, { state: await parentRosterStore.load(await readBody(request, 20_000)) });
+        return;
+      }
       if (pathname === "/api/school-exceptions" && request.method === "GET") {
         json(response, 200, await store.load());
         return;
@@ -338,7 +646,8 @@ export async function createAppServer(options = {}) {
       await serveStatic(request, response, distDirectory);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Onbekende serverfout.";
-      json(response, 400, { error: message });
+      const status = error instanceof ParentRosterError ? error.status : 400;
+      json(response, status, { error: message });
     }
   });
 }

@@ -1,6 +1,6 @@
 # Poetsrooster
 
-Een lokale React-app waarmee klassenouders een eerlijk poetsrooster maken. Gegevens blijven in de browser via `localStorage`.
+Een React-app waarmee klassenouders een eerlijk poetsrooster maken. Gegevens blijven standaard in de browser via `localStorage`; een ouder kan optioneel een versleutelde serverback-up maken.
 
 Handleidingen:
 
@@ -48,7 +48,7 @@ docker compose up -d
 
 Open daarna `http://localhost:8080`.
 
-De schoolbrede kalender wordt als JSON bewaard in het permanente Docker-volume `poetsrooster-data`. Het volume blijft bestaan wanneer de container wordt bijgewerkt of vervangen.
+De schoolbrede kalender en versleutelde serverback-ups van ouders worden bewaard in het permanente Docker-volume `poetsrooster-data`. Het volume blijft bestaan wanneer de container wordt bijgewerkt of vervangen.
 
 ## Exporteren
 
@@ -76,6 +76,8 @@ Met `JSON exporteren` maak je een back-up. Met `JSON importeren` laad je zo'n ba
 
 Bij `Back-up & import` kan een gebruiker het volledige poetsrooster downloaden. Dit JSON-bestand bevat de klasinstellingen, leerlingen, klasuitzonderingen en alle automatische en handmatige toewijzingen. Kies op een andere computer `Back-up importeren` om ermee verder te werken. De actuele centrale schoolkalender wordt na het importeren automatisch toegepast.
 
+Als alternatief kan een ouder het onderdeel uitklappen en een versleutelde serverback-up maken. De combinatie van de voornaam van de ouder en een wachtwoord van minimaal 10 tekens geeft later weer toegang. Bij het opslaan moet het wachtwoord tweemaal worden ingevuld. Een bestaande combinatie wordt geweigerd en nooit overschreven; dezelfde voornaam met een ander wachtwoord is wel toegestaan. De server bewaart geen leesbaar wachtwoord en versleutelt de volledige roosterinhoud. Gebruik deze functie via internet uitsluitend achter HTTPS.
+
 ## Bijwerken op de server
 
 Na de eerste installatie kan de app vanuit de repositorymap met één commando worden bijgewerkt:
@@ -87,8 +89,10 @@ Na de eerste installatie kan de app vanuit de repositorymap met één commando w
 Het script:
 
 - stopt wanneer er lokale, niet-gecommitte wijzigingen zijn;
-- haalt de nieuwste versie van `origin/main` op met een veilige fast-forward;
-- bouwt de Docker-image opnieuw;
+- controleert eerst of `origin/main` een nieuwere Git-revisie bevat;
+- stopt zonder Docker-build of containerherstart wanneer er geen nieuwe versie is;
+- haalt een nieuwe versie op met een veilige fast-forward;
+- bouwt alleen bij een nieuwe versie de Docker-image opnieuw;
 - start of vervangt de container;
 - controleert of de app bereikbaar is op `http://127.0.0.1:8080/`.
 
@@ -99,3 +103,5 @@ POETSROOSTER_BRANCH=main \
 POETSROOSTER_HEALTH_URL=https://voorbeeld.nl/ \
 ./update.sh
 ```
+
+Als GitHub geen nieuwere revisie bevat, meldt het script welke versie al draait en verandert het niets aan Docker of de container.

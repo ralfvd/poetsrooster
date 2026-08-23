@@ -4,12 +4,38 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   createSchoolExceptionStore,
+  createParentRosterStore,
   createAccessLinkToken,
   createAppServer,
   normalizeFeedbackWhatsappNumber,
   passwordMatches,
   validateSchoolExceptionFile,
 } from "./server.mjs";
+
+const parentRosterState = {
+  version: 1,
+  settings: {
+    className: "Groep 7B",
+    startDate: "2026-08-24",
+    endDate: "2027-07-19",
+    cleaningWeekdays: [3, 5],
+    studentsPerCleaningDay: 1,
+  },
+  students: [{
+    id: "anna",
+    name: "Anna",
+    previousYearCount: 2,
+    manualOnly: false,
+    availableWeekdays: [3, 5],
+  }],
+  excludedDates: [{ id: "reis", date: "2026-10-14", reason: "schoolreisje" }],
+  schedule: [{
+    date: "2026-08-26",
+    weekday: 3,
+    excluded: false,
+    assignments: [{ studentId: "anna", locked: true, source: "manual" }],
+  }],
+};
 
 const temporaryDirectories = [];
 afterEach(async () => {
@@ -57,6 +83,58 @@ describe("schoolbrede uitzonderingen API", () => {
   });
 });
 
+describe("versleutelde ouderroosters", () => {
+  it("bewaart geen leesbare roostergegevens of wachtwoorden en kan opnieuw laden", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "poetsrooster-ouders-"));
+    temporaryDirectories.push(directory);
+    const store = await createParentRosterStore(directory);
+    await store.create({
+      parentName: "Ralf",
+      password: "veilig-wachtwoord",
+      passwordConfirmation: "veilig-wachtwoord",
+      state: parentRosterState,
+    });
+
+    const rawFile = await readFile(join(directory, "ouderroosters.json"), "utf8");
+    expect(rawFile).not.toContain("Ralf");
+    expect(rawFile).not.toContain("veilig-wachtwoord");
+    expect(rawFile).not.toContain("Anna");
+    expect(rawFile).not.toContain("Groep 7B");
+
+    const restartedStore = await createParentRosterStore(directory);
+    await expect(restartedStore.load({ parentName: "ralf", password: "veilig-wachtwoord" }))
+      .resolves.toEqual(parentRosterState);
+    await expect(restartedStore.load({ parentName: "Ralf", password: "verkeerd-wachtwoord" }))
+      .rejects.toMatchObject({ status: 401 });
+  });
+
+  it("overschrijft een bestaande combinatie niet maar staat dezelfde voornaam met ander wachtwoord toe", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "poetsrooster-ouders-uniek-"));
+    temporaryDirectories.push(directory);
+    const store = await createParentRosterStore(directory);
+    await store.create({
+      parentName: "Sam",
+      password: "eerste-wachtwoord",
+      passwordConfirmation: "eerste-wachtwoord",
+      state: parentRosterState,
+    });
+    await expect(store.create({
+      parentName: "sam",
+      password: "eerste-wachtwoord",
+      passwordConfirmation: "eerste-wachtwoord",
+      state: parentRosterState,
+    })).rejects.toMatchObject({ status: 409 });
+    await expect(store.create({
+      parentName: "Sam",
+      password: "tweede-wachtwoord",
+      passwordConfirmation: "tweede-wachtwoord",
+      state: { ...parentRosterState, settings: { ...parentRosterState.settings, className: "Groep 8A" } },
+    })).resolves.toHaveProperty("createdAt");
+    await expect(store.load({ parentName: "Sam", password: "tweede-wachtwoord" }))
+      .resolves.toMatchObject({ settings: { className: "Groep 8A" } });
+  });
+});
+
 describe("toegangsbeveiliging", () => {
   it("toont op de basislink een login en accepteert wachtwoord en unieke link", async () => {
     const directory = await mkdtemp(join(tmpdir(), "poetsrooster-access-"));
@@ -91,6 +169,8 @@ describe("toegangsbeveiliging", () => {
       expect(blockedApi.status).toBe(401);
       const blockedConfig = await fetch(`${baseUrl}/api/config`);
       expect(blockedConfig.status).toBe(401);
+      const blockedParentRoster = await fetch(`${baseUrl}/api/parent-rosters/load`, { method: "POST" });
+      expect(blockedParentRoster.status).toBe(401);
 
       const wrongLogin = await fetch(`${baseUrl}/api/access/login`, {
         method: "POST",
@@ -117,6 +197,38 @@ describe("toegangsbeveiliging", () => {
       const appConfig = await fetch(`${baseUrl}/api/config`, { headers: { Cookie: cookie.split(";")[0] } });
       expect(appConfig.status).toBe(200);
       expect(await appConfig.json()).toEqual({ feedbackWhatsappNumber: "31612345678" });
+
+      const savedParentRoster = await fetch(`${baseUrl}/api/parent-rosters`, {
+        method: "POST",
+        headers: { Cookie: cookie.split(";")[0], "Content-Type": "application/json" },
+        body: JSON.stringify({
+          parentName: "Ralf",
+          password: "veilig-wachtwoord",
+          passwordConfirmation: "veilig-wachtwoord",
+          state: parentRosterState,
+        }),
+      });
+      expect(savedParentRoster.status).toBe(201);
+
+      const duplicateParentRoster = await fetch(`${baseUrl}/api/parent-rosters`, {
+        method: "POST",
+        headers: { Cookie: cookie.split(";")[0], "Content-Type": "application/json" },
+        body: JSON.stringify({
+          parentName: "ralf",
+          password: "veilig-wachtwoord",
+          passwordConfirmation: "veilig-wachtwoord",
+          state: parentRosterState,
+        }),
+      });
+      expect(duplicateParentRoster.status).toBe(409);
+
+      const loadedParentRoster = await fetch(`${baseUrl}/api/parent-rosters/load`, {
+        method: "POST",
+        headers: { Cookie: cookie.split(";")[0], "Content-Type": "application/json" },
+        body: JSON.stringify({ parentName: "Ralf", password: "veilig-wachtwoord" }),
+      });
+      expect(loadedParentRoster.status).toBe(200);
+      expect((await loadedParentRoster.json()).state).toEqual(parentRosterState);
 
       const wrongAdminUnlock = await fetch(`${baseUrl}/api/school-exceptions/unlock`, {
         method: "POST",

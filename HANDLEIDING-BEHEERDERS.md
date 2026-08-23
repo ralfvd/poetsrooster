@@ -64,6 +64,19 @@ docker compose up -d --force-recreate
 
 De opgeslagen schoolkalender blijft hierbij behouden.
 
+## Optionele serverback-ups van ouders
+
+Bij **Back-up & import** kunnen ouders hun volledige bewerkbare rooster optioneel op de server bewaren. Zij gebruiken daarvoor hun voornaam en een wachtwoord van minimaal 10 tekens, dat bij het opslaan tweemaal moet worden ingevuld. Met dezelfde combinatie kan het rooster later op een ander apparaat worden opgehaald.
+
+- Een bestaande combinatie wordt nooit overschreven.
+- De voornaam is niet hoofdlettergevoelig: `Ralf` en `ralf` gelden als dezelfde naam.
+- Dezelfde voornaam met een ander wachtwoord mag wel bestaan.
+- Wachtwoorden worden niet opgeslagen en kunnen niet worden hersteld.
+- De roosterinhoud wordt met AES-256-GCM versleuteld opgeslagen in `ouderroosters.json` in het permanente Docker-volume `poetsrooster-data`.
+- Het volledige Docker-volume moet daarom in de serverback-up worden meegenomen.
+
+Gebruik deze functie alleen via HTTPS. Zonder HTTPS kunnen voornaam, wachtwoord en roostergegevens tijdens het versturen worden onderschept.
+
 ## App bijwerken
 
 Voer vanuit de repositorymap uit:
@@ -72,7 +85,7 @@ Voer vanuit de repositorymap uit:
 ./update.sh
 ```
 
-Dit haalt de nieuwste versie op, bouwt de app opnieuw en controleert of deze bereikbaar is. De centrale schoolkalender staat in het permanente Docker-volume `poetsrooster-data` en blijft bij updates bestaan.
+Dit controleert eerst of GitHub een nieuwere revisie bevat. Alleen dan haalt het script de versie op, bouwt het de app opnieuw, vervangt het de container en controleert het of de app bereikbaar is. Als er geen nieuwe versie is, stopt het zonder Docker-build of containerherstart. De centrale schoolkalender en versleutelde ouderback-ups staan in het permanente Docker-volume `poetsrooster-data` en blijven bij updates bestaan.
 
 Rechtsonder in de app staat de korte Git-revisie, bijvoorbeeld `76ac6c7`. Deze moet overeenkomen met de versie die `update.sh` na een geslaagde update meldt.
 
