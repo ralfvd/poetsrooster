@@ -1,5 +1,5 @@
 import type { ScheduleDay, Student, Weekday } from "../types";
-import { formatDate, weekdayLabel } from "../utils/dates";
+import { formatDate, shortWeekdayLabel, weekdayLabel } from "../utils/dates";
 import { formatExclusionNotes } from "../utils/exclusions";
 import { groupScheduleByWeek } from "../utils/schedule";
 
@@ -13,6 +13,29 @@ type Props = {
   onUnavailable: (date: string, slot: number) => void;
   onDateUnavailableChange: (date: string, studentId: string, unavailable: boolean) => void;
 };
+
+function scheduleNotes(
+  days: Iterable<ScheduleDay>,
+  studentsById: Map<string, Student>,
+  shortWeekdays = false,
+  separator = " · ",
+): string {
+  const dayList = [...days];
+  return [
+    formatExclusionNotes(dayList, separator, shortWeekdays),
+    ...dayList.flatMap((day) => day.assignments.flatMap((assignment) => {
+      if (!Object.prototype.hasOwnProperty.call(assignment, "changedFromStudentId")) return [];
+      const previous = assignment.changedFromStudentId
+        ? studentsById.get(assignment.changedFromStudentId)?.name || "Naamloos"
+        : "leeg";
+      const current = assignment.studentId
+        ? studentsById.get(assignment.studentId)?.name || "Naamloos"
+        : "leeg";
+      const dayLabel = shortWeekdays ? shortWeekdayLabel(day.weekday) : weekdayLabel(day.weekday);
+      return [`${dayLabel}: ${previous} → ${current}`];
+    })),
+  ].filter(Boolean).join(separator);
+}
 
 export function ScheduleTable({
   schedule,
@@ -133,19 +156,10 @@ export function ScheduleTable({
                 );
               })}
               <td className="notes-cell">
-                {[
-                  formatExclusionNotes(days.values()),
-                  ...[...days.values()].flatMap((day) => day.assignments.flatMap((assignment) => {
-                    if (!Object.prototype.hasOwnProperty.call(assignment, "changedFromStudentId")) return [];
-                    const previous = assignment.changedFromStudentId
-                      ? studentsById.get(assignment.changedFromStudentId)?.name || "Naamloos"
-                      : "leeg";
-                    const current = assignment.studentId
-                      ? studentsById.get(assignment.studentId)?.name || "Naamloos"
-                      : "leeg";
-                    return [`${weekdayLabel(day.weekday)}: ${previous} → ${current}`];
-                  })),
-                ].filter(Boolean).join(" · ")}
+                <span className="no-print">{scheduleNotes(days.values(), studentsById)}</span>
+                <span className="print-only print-notes">
+                  {scheduleNotes(days.values(), studentsById, true, "\n")}
+                </span>
               </td>
             </tr>
           ))}

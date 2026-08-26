@@ -57,6 +57,10 @@ export function weekdayLabel(weekday: Weekday): string {
   return WEEKDAYS.find((day) => day.value === weekday)?.label ?? "";
 }
 
+export function shortWeekdayLabel(weekday: Weekday): string {
+  return WEEKDAYS.find((day) => day.value === weekday)?.short ?? "";
+}
+
 export function daysBetween(a: string, b: string): number {
   return Math.abs((parseDate(a).getTime() - parseDate(b).getTime()) / 86_400_000);
 }

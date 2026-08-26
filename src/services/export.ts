@@ -1,7 +1,7 @@
 import type { jsPDF } from "jspdf";
 import type { SheetData } from "write-excel-file/browser";
 import type { ScheduleDay, ScheduleSettings, Student, Weekday } from "../types";
-import { formatDate, formatLongDate, weekdayLabel } from "../utils/dates";
+import { formatDate, formatLongDate, shortWeekdayLabel, weekdayLabel } from "../utils/dates";
 import { formatExclusionNotes } from "../utils/exclusions";
 import { groupScheduleByWeek } from "../utils/schedule";
 
@@ -40,7 +40,9 @@ function exportRows(
   schedule: ScheduleDay[],
   students: Student[],
   weekdays: Weekday[],
+  options: { shortWeekdays?: boolean; noteSeparator?: string } = {},
 ): ExportRow[] {
+  const noteSeparator = options.noteSeparator ?? "; ";
   const studentsById = new Map(students.map((student) => [student.id, student.name || "Naamloos"]));
   return groupScheduleByWeek(schedule).map(({ weekStart, days }) => {
     const values: Record<number, string> = {};
@@ -58,12 +60,16 @@ function exportRows(
                 const previousName = assignment.changedFromStudentId
                   ? studentsById.get(assignment.changedFromStudentId) ?? "--"
                   : "--";
-                changeNotes.push(`${weekdayLabel(weekday)}: ${previousName} → ${currentName}`);
+                const dayLabel = options.shortWeekdays ? shortWeekdayLabel(weekday) : weekdayLabel(weekday);
+                changeNotes.push(`${dayLabel}: ${previousName} → ${currentName}`);
                 return `${currentName}*`;
               })
               .join(", ");
     }
-    const notes = [formatExclusionNotes(days.values(), "; "), ...changeNotes].filter(Boolean).join("; ");
+    const notes = [
+      formatExclusionNotes(days.values(), noteSeparator, options.shortWeekdays),
+      ...changeNotes,
+    ].filter(Boolean).join(noteSeparator);
     return { weekStart, days: values, notes };
   });
 }
@@ -125,7 +131,10 @@ export function buildScheduleExcelData(
   students: Student[],
   createdAt = new Date(),
 ): SheetData {
-  const rows = exportRows(schedule, students, settings.cleaningWeekdays);
+  const rows = exportRows(schedule, students, settings.cleaningWeekdays, {
+    shortWeekdays: true,
+    noteSeparator: "\n",
+  });
   const columnCount = settings.cleaningWeekdays.length + 2;
   const mergedRow = (value: string, style: Record<string, unknown> = {}) => [
     { value, columnSpan: columnCount, ...style },
@@ -225,7 +234,10 @@ export async function createSchedulePdf(
   const margin = 7;
   const tableTop = 22;
   const headerHeight = 5.5;
-  const rows = exportRows(schedule, students, settings.cleaningWeekdays);
+  const rows = exportRows(schedule, students, settings.cleaningWeekdays, {
+    shortWeekdays: true,
+    noteSeparator: "\n",
+  });
   const rowHeight = Math.min(5.2, (pageHeight - margin - tableTop - headerHeight) / Math.max(rows.length, 1));
   const firstColumnWidth = 23;
   const notesWidth = 42;
@@ -264,8 +276,16 @@ export async function createSchedulePdf(
       } else {
         doc.rect(x, y, width, height, "S");
       }
-      const text = truncate(doc, values[index] ?? "", width - 2);
-      doc.text(text, x + 1, y + height / 2, { baseline: "middle" });
+      const rawLines = (values[index] ?? "").split("\n").filter(Boolean);
+      const lines = rawLines.length > 2
+        ? [rawLines[0], rawLines.slice(1).join("; ")]
+        : rawLines.length ? rawLines : [""];
+      const textLines = lines.map((line) => truncate(doc, line, width - 2));
+      const lineHeight = Math.min(1.75, height / Math.max(textLines.length, 1));
+      const firstLineY = y + height / 2 - ((textLines.length - 1) * lineHeight) / 2;
+      textLines.forEach((text, lineIndex) => {
+        doc.text(text, x + 1, firstLineY + lineIndex * lineHeight, { baseline: "middle" });
+      });
       x += width;
     }
   };

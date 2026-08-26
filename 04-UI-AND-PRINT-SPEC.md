@@ -144,6 +144,8 @@ De geavanceerde bediening staat standaard uit en wordt met een vinkje geactiveer
 
 Na een geslaagde ruil krijgen gewijzigde plekken een opvallende markering met `was [naam]`. In print en exports krijgt de nieuwe naam een `*` en vermeldt de kolom Opmerkingen de wijziging als `oude naam → nieuwe naam`.
 
+In print, PDF en Excel gebruiken verschillende opmerkingen binnen dezelfde week de korte labels `Wo:` en `Vr:` en staan ze op afzonderlijke regels. De PDF blijft daarbij altijd één A4 in portrait.
+
 ---
 
 ## Status / warnings

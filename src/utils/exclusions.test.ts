@@ -48,4 +48,11 @@ describe("formatExclusionNotes", () => {
       excludedDay(3, "studiedag"),
     ])).toBe("Woensdag: studiedag");
   });
+
+  it("kan korte weekdagen op afzonderlijke regels tonen voor print en PDF", () => {
+    expect(formatExclusionNotes([
+      excludedDay(3, "kamp"),
+      excludedDay(5, "laatste schooldag"),
+    ], "\n", true)).toBe("Wo: kamp\nVr: laatste schooldag");
+  });
 });

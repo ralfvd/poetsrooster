@@ -1,5 +1,5 @@
 import type { ExcludedDate, ScheduleDay } from "../types";
-import { weekdayLabel } from "./dates";
+import { shortWeekdayLabel, weekdayLabel } from "./dates";
 
 export function mergeExclusions(
   schoolExclusions: ExcludedDate[],
@@ -14,6 +14,7 @@ export function mergeExclusions(
 export function formatExclusionNotes(
   days: Iterable<ScheduleDay>,
   separator = " · ",
+  shortWeekdays = false,
 ): string {
   const excludedDays = [...days].filter((day) => day.excluded);
   const reasons = [...new Set(
@@ -25,6 +26,6 @@ export function formatExclusionNotes(
   }
 
   return excludedDays
-    .map((day) => `${weekdayLabel(day.weekday)}: ${day.exclusionReason ?? "Uitgesloten"}`)
+    .map((day) => `${shortWeekdays ? shortWeekdayLabel(day.weekday) : weekdayLabel(day.weekday)}: ${day.exclusionReason ?? "Uitgesloten"}`)
     .join(separator);
 }

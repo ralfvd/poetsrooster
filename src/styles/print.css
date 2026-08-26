@@ -131,6 +131,13 @@
     color: #000;
   }
 
+  .notes-cell .print-notes {
+    display: block !important;
+    white-space: pre-line !important;
+    font-size: 6pt;
+    line-height: .9;
+  }
+
   .schedule-table tbody tr:nth-child(even) > th,
   .schedule-table tbody tr:nth-child(even) > td {
     background: #f2f2f2 !important;
