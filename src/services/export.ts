@@ -44,6 +44,7 @@ function exportRows(
   const studentsById = new Map(students.map((student) => [student.id, student.name || "Naamloos"]));
   return groupScheduleByWeek(schedule).map(({ weekStart, days }) => {
     const values: Record<number, string> = {};
+    const changeNotes: string[] = [];
     for (const weekday of weekdays) {
       const day = days.get(weekday);
       values[weekday] = !day
@@ -51,10 +52,18 @@ function exportRows(
         : day.excluded
           ? "--"
           : day.assignments
-              .map((assignment) => assignment.studentId ? studentsById.get(assignment.studentId) ?? "--" : "--")
+              .map((assignment) => {
+                const currentName = assignment.studentId ? studentsById.get(assignment.studentId) ?? "--" : "--";
+                if (!Object.prototype.hasOwnProperty.call(assignment, "changedFromStudentId")) return currentName;
+                const previousName = assignment.changedFromStudentId
+                  ? studentsById.get(assignment.changedFromStudentId) ?? "--"
+                  : "--";
+                changeNotes.push(`${weekdayLabel(weekday)}: ${previousName} → ${currentName}`);
+                return `${currentName}*`;
+              })
               .join(", ");
     }
-    const notes = formatExclusionNotes(days.values(), "; ");
+    const notes = [formatExclusionNotes(days.values(), "; "), ...changeNotes].filter(Boolean).join("; ");
     return { weekStart, days: values, notes };
   });
 }

@@ -44,6 +44,12 @@ Een automatisch geplande beurt moet minimaal 28 dagen van iedere andere beurt va
 
 ---
 
+### H7. Vooraf ingestelde verhindering op een datum
+
+Als een leerling in `unavailableStudentIds` van een poetsdatum staat, mag de optimizer die leerling niet op die datum plaatsen. Een algemene beschikbaarheid op die weekdag heft deze specifieke verhindering niet op.
+
+---
+
 ## Zachte constraints / optimalisatiedoelen
 
 In volgorde van belang:
@@ -117,6 +123,24 @@ Als kandidaten verder exact gelijk scoren:
 - of seeded random
 
 Seeded random heeft als voordeel dat optimaliseren met dezelfde invoer reproduceerbaar kan zijn.
+
+---
+
+## Minimale aanpassing na de verdeling
+
+Wanneer een ouder/verzorger niet kan op een toegewezen datum, zoekt de geavanceerde aanpassing eerst een directe ruil. Als die niet geldig is, wordt een zo kort mogelijke ruilketen van maximaal vier plekken gezocht.
+
+De aanpassing:
+
+- wijzigt geen handmatig vastgezette plekken;
+- houdt de opgegeven beschikbare poetsdagen als harde grens aan;
+- houdt vooraf ingestelde verhinderingen per datum als harde grens aan;
+- geeft bij gelijke oplossingen voorkeur aan behoud van dezelfde weekdag;
+- houdt voor automatisch geplaatste beurten minimaal 28 dagen afstand aan;
+- behoudt het aantal beurten per leerling doordat alleen namen worden geruild;
+- markeert per gewijzigde plek welke leerling daar in de eerdere verdeling stond.
+
+De gebruiker kan de markeringen wissen wanneer het aangepaste rooster het nieuwe uitgangspunt wordt.
 
 ---
 

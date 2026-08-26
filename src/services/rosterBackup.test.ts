@@ -40,9 +40,28 @@ describe("poetsroosterback-up", () => {
   });
 
   it("weigert toewijzingen aan een onbekende leerling", () => {
-    const backup = createRosterBackup(state);
+    const backup = createRosterBackup(structuredClone(state));
     backup.state.schedule[0].assignments[0].studentId = "onbekend";
     expect(() => normalizeRosterBackup(backup)).toThrow("onbekende leerling");
+  });
+
+  it("bewaart een wijzigingsmarkering in de back-up", () => {
+    const markedState = structuredClone(state);
+    markedState.students.push({
+      id: "bram",
+      name: "Bram",
+      previousYearCount: 2,
+      manualOnly: false,
+      availableWeekdays: [3],
+    });
+    markedState.schedule[0].assignments[0].changedFromStudentId = "bram";
+    expect(normalizeRosterBackup(createRosterBackup(markedState)).state).toEqual(markedState);
+  });
+
+  it("bewaart vooraf ingestelde verhinderingen per datum", () => {
+    const unavailableState = structuredClone(state);
+    unavailableState.schedule[0].unavailableStudentIds = ["anna"];
+    expect(normalizeRosterBackup(createRosterBackup(unavailableState)).state).toEqual(unavailableState);
   });
 
   it("zet klasnaam en datum in de bestandsnaam", () => {

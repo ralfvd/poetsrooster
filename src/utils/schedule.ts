@@ -41,6 +41,7 @@ export function generateSchedule(
       weekday,
       excluded: Boolean(exclusionReason),
       exclusionReason,
+      unavailableStudentIds: old?.unavailableStudentIds ?? [],
       assignments,
     });
   }

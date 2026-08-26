@@ -32,6 +32,7 @@ export type Assignment = {
   studentId: string | null;
   locked: boolean;
   source: "manual" | "optimizer" | null;
+  changedFromStudentId?: string | null;
 };
 
 export type ScheduleDay = {
@@ -39,6 +40,7 @@ export type ScheduleDay = {
   weekday: Weekday;
   excluded: boolean;
   exclusionReason?: string;
+  unavailableStudentIds?: string[];
   assignments: Assignment[];
 };
 

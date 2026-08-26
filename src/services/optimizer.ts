@@ -146,6 +146,7 @@ export function optimizeSchedule(
       (student) =>
         !student.manualOnly &&
         student.availableWeekdays.includes(day.weekday) &&
+        !day.unavailableStudentIds?.includes(student.id) &&
         !alreadyAssigned.has(student.id),
     );
     const candidates = availableCandidates.filter((student) =>

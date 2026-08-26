@@ -97,6 +97,21 @@ describe("optimizeSchedule", () => {
     expect(result.warnings).toEqual([]);
   });
 
+  it("plant een leerling niet in op een datum waarop die vooraf als verhinderd is aangevinkt", () => {
+    const roster = students(2, [3]);
+    const schedule = [{
+      date: "2026-09-02",
+      weekday: 3 as const,
+      excluded: false,
+      unavailableStudentIds: [roster[0].id],
+      assignments: [assignment()],
+    }];
+
+    const result = optimizeSchedule(roster, schedule, 77);
+
+    expect(result.schedule[0].assignments[0].studentId).toBe(roster[1].id);
+  });
+
   it("varieert de verdeling over de weken zonder de eindtelling oneerlijk te maken", () => {
     const roster = students(8);
     const first = optimizeSchedule(roster, weeklyDays(24), 101);

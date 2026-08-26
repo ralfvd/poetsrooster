@@ -84,7 +84,7 @@ Prioriteiten van de optimizer:
 4. Het aantal poetsbeurten in het huidige schooljaar zo gelijk mogelijk verdelen.
 5. Als niet iedereen exact even vaak kan poetsen, krijgen kinderen die vorig jaar minder vaak gepoetst hebben voorrang op extra beurten.
 6. Beurten zo goed mogelijk over het schooljaar verspreiden.
-7. Waar mogelijk voorkomen dat hetzelfde kind kort na elkaar wordt ingepland.
+7. Tussen automatisch geplande beurten van hetzelfde kind altijd minimaal vier weken houden.
 8. Bij volledig gelijke kandidaten een neutrale/random tie-breaker gebruiken.
 
 ---
@@ -141,6 +141,25 @@ Als de gebruiker handmatig een kind kiest op een niet-beschikbare dag:
 - Markeer de assignment als handmatig/vastgezet
 
 De automatische optimizer mag nooit zelf zo'n conflict creëren.
+
+---
+
+## Minimale wijziging na verdeling
+
+Vóór de verdeling moet een geavanceerde modus per poetsdatum laten vastleggen welke ouders/verzorgers dan niet kunnen. De automatische optimizer mag de bijbehorende leerlingen niet op die specifieke datum plaatsen. Deze datumuitzondering komt bovenop de algemene beschikbare weekdagen.
+
+Na de optimale verdeling moet de gebruiker bij een automatische beurt kunnen aangeven dat de betreffende ouder/verzorger niet op die datum kan.
+
+De app zoekt dan eerst een directe ruil en zo nodig een korte ruilketen. Daarbij gelden:
+
+- zo weinig mogelijk gewijzigde plekken;
+- alleen beschikbare poetsdagen;
+- voorkeur voor behoud van dezelfde weekdag;
+- minimaal vier weken tussen automatisch geplande beurten;
+- handmatig vastgezette plekken blijven staan;
+- iedere wijziging toont de eerdere en nieuwe leerlingnaam.
+
+De markering moet ook zichtbaar zijn in print, PDF, Excel en gekopieerde roosters.
 
 ---
 

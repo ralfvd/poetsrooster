@@ -60,7 +60,17 @@ function normalizeAssignment(value: unknown, studentIds: Set<string>): Assignmen
   if (typeof item.locked !== "boolean" || ![null, "manual", "optimizer"].includes(item.source as never)) {
     throw new Error("Een toewijzing in de back-up is ongeldig.");
   }
-  return { studentId, locked: item.locked, source: item.source as Assignment["source"] };
+  const changedFromStudentId = item.changedFromStudentId;
+  if (changedFromStudentId !== undefined && changedFromStudentId !== null &&
+      (typeof changedFromStudentId !== "string" || !studentIds.has(changedFromStudentId))) {
+    throw new Error("Een wijzigingsmarkering verwijst naar een onbekende leerling.");
+  }
+  return {
+    studentId,
+    locked: item.locked,
+    source: item.source as Assignment["source"],
+    ...(changedFromStudentId !== undefined ? { changedFromStudentId: changedFromStudentId as string | null } : {}),
+  };
 }
 
 function normalizeScheduleDay(value: unknown, studentIds: Set<string>): ScheduleDay {
@@ -73,11 +83,18 @@ function normalizeScheduleDay(value: unknown, studentIds: Set<string>): Schedule
   if (exclusionReason !== undefined && typeof exclusionReason !== "string") {
     throw new Error("Een poetsdag in de back-up bevat een ongeldige reden.");
   }
+  const unavailableStudentIds = item.unavailableStudentIds;
+  if (unavailableStudentIds !== undefined && (!Array.isArray(unavailableStudentIds) ||
+      unavailableStudentIds.length > studentIds.size ||
+      !unavailableStudentIds.every((studentId) => typeof studentId === "string" && studentIds.has(studentId)))) {
+    throw new Error("Een poetsdag bevat ongeldige datumuitzonderingen voor leerlingen.");
+  }
   return {
     date: item.date,
     weekday: item.weekday,
     excluded: item.excluded,
     exclusionReason,
+    ...(Array.isArray(unavailableStudentIds) ? { unavailableStudentIds: [...new Set(unavailableStudentIds)] } : {}),
     assignments: item.assignments.map((assignment) => normalizeAssignment(assignment, studentIds)),
   };
 }

@@ -113,8 +113,11 @@ type Assignment = {
   studentId: string | null;
   locked: boolean;
   source: "manual" | "optimizer" | null;
+  changedFromStudentId?: string | null;
 };
 ```
+
+`changedFromStudentId` bewaart bij een geavanceerde ruil de leerling die op deze plek stond vóór de eerste aanpassing. Ontbreekt het veld, dan is de plek niet als gewijzigd gemarkeerd.
 
 ---
 
@@ -126,9 +129,12 @@ type ScheduleDay = {
   weekday: number;
   excluded: boolean;
   exclusionReason?: string;
+  unavailableStudentIds?: string[];
   assignments: Assignment[];
 };
 ```
+
+`unavailableStudentIds` bevat leerlingen van wie de ouder(s)/verzorger(s) op deze specifieke datum niet kunnen. De optimizer en geavanceerde ruilfunctie behandelen deze lijst als harde constraint.
 
 ---
 

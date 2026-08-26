@@ -7,13 +7,26 @@ type Props = {
   schedule: ScheduleDay[];
   students: Student[];
   weekdays: Weekday[];
+  advancedMode: boolean;
   onAssign: (date: string, slot: number, studentId: string | null) => void;
   onUnlock: (date: string, slot: number) => void;
+  onUnavailable: (date: string, slot: number) => void;
+  onDateUnavailableChange: (date: string, studentId: string, unavailable: boolean) => void;
 };
 
-export function ScheduleTable({ schedule, students, weekdays, onAssign, onUnlock }: Props) {
+export function ScheduleTable({
+  schedule,
+  students,
+  weekdays,
+  advancedMode,
+  onAssign,
+  onUnlock,
+  onUnavailable,
+  onDateUnavailableChange,
+}: Props) {
   const groups = groupScheduleByWeek(schedule);
   const sortedStudents = [...students].sort((a, b) => a.name.localeCompare(b.name, "nl"));
+  const studentsById = new Map(students.map((student) => [student.id, student]));
 
   if (groups.length === 0) {
     return <div className="empty-schedule">Genereer eerst de poetsdagen om het rooster te vullen.</div>;
@@ -41,7 +54,10 @@ export function ScheduleTable({ schedule, students, weekdays, onAssign, onUnlock
                   <td key={weekday}>
                     <div className="assignment-stack no-print">
                       {day.assignments.map((assignment, slot) => (
-                        <div className={`assignment ${assignment.locked ? "is-locked" : ""}`} key={slot}>
+                        <div
+                          className={`assignment ${assignment.locked ? "is-locked" : ""} ${Object.prototype.hasOwnProperty.call(assignment, "changedFromStudentId") ? "is-adjusted" : ""}`}
+                          key={slot}
+                        >
                           <select
                             aria-label={`${weekdayLabel(weekday)} ${formatDate(day.date)}, plek ${slot + 1}`}
                             value={assignment.studentId ?? ""}
@@ -63,13 +79,53 @@ export function ScheduleTable({ schedule, students, weekdays, onAssign, onUnlock
                               <span aria-hidden="true">🔒</span><span className="lock-label"> Vast</span>
                             </button>
                           )}
+                          {advancedMode && assignment.studentId && !assignment.locked &&
+                            !studentsById.get(assignment.studentId)?.manualOnly && (
+                            <button
+                              type="button"
+                              className="unavailable-button"
+                              title="Ouder/verzorger kan niet op deze datum"
+                              onClick={() => onUnavailable(day.date, slot)}
+                            >
+                              Kan niet
+                            </button>
+                          )}
+                          {Object.prototype.hasOwnProperty.call(assignment, "changedFromStudentId") && (
+                            <span className="adjustment-label">
+                              Gewijzigd · was {assignment.changedFromStudentId
+                                ? studentsById.get(assignment.changedFromStudentId)?.name || "Naamloos"
+                                : "leeg"}
+                            </span>
+                          )}
                         </div>
                       ))}
+                      {advancedMode && (
+                        <details className="date-unavailability">
+                          <summary>
+                            Kan niet op deze datum
+                            {day.unavailableStudentIds?.length ? ` (${day.unavailableStudentIds.length})` : ""}
+                          </summary>
+                          <div className="date-unavailability-list">
+                            {sortedStudents.map((student) => (
+                              <label key={student.id}>
+                                <input
+                                  type="checkbox"
+                                  checked={day.unavailableStudentIds?.includes(student.id) ?? false}
+                                  onChange={(event) => onDateUnavailableChange(day.date, student.id, event.target.checked)}
+                                />
+                                <span>{student.name || "Naamloos"}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </details>
+                      )}
                     </div>
                     <span className="print-only print-assignment-names">
                       {day.assignments
                         .map((assignment) =>
-                          students.find((student) => student.id === assignment.studentId)?.name || "--",
+                          `${studentsById.get(assignment.studentId ?? "")?.name || "--"}${
+                            Object.prototype.hasOwnProperty.call(assignment, "changedFromStudentId") ? "*" : ""
+                          }`,
                         )
                         .join(", ")}
                     </span>
@@ -77,7 +133,19 @@ export function ScheduleTable({ schedule, students, weekdays, onAssign, onUnlock
                 );
               })}
               <td className="notes-cell">
-                {formatExclusionNotes(days.values())}
+                {[
+                  formatExclusionNotes(days.values()),
+                  ...[...days.values()].flatMap((day) => day.assignments.flatMap((assignment) => {
+                    if (!Object.prototype.hasOwnProperty.call(assignment, "changedFromStudentId")) return [];
+                    const previous = assignment.changedFromStudentId
+                      ? studentsById.get(assignment.changedFromStudentId)?.name || "Naamloos"
+                      : "leeg";
+                    const current = assignment.studentId
+                      ? studentsById.get(assignment.studentId)?.name || "Naamloos"
+                      : "leeg";
+                    return [`${weekdayLabel(day.weekday)}: ${previous} → ${current}`];
+                  })),
+                ].filter(Boolean).join(" · ")}
               </td>
             </tr>
           ))}

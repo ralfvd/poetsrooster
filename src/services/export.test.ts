@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import writeExcelFile from "write-excel-file/node";
-import type { ScheduleSettings, Student } from "../types";
+import type { ScheduleDay, ScheduleSettings, Student } from "../types";
 import { generateSchedule } from "../utils/schedule";
 import {
   buildPrintedOnLabel,
@@ -23,7 +23,7 @@ const students: Student[] = [
   { id: "bram", name: "Bram", previousYearCount: 3, manualOnly: false, availableWeekdays: [3, 5] },
 ];
 
-function filledSchedule() {
+function filledSchedule(): ScheduleDay[] {
   return generateSchedule(
     settings,
     [{ id: "holiday", date: "2026-10-14", reason: "herfstvakantie" }],
@@ -60,6 +60,17 @@ describe("schedule export", () => {
     ]);
     const text = buildScheduleTsv(schedule, students, settings.cleaningWeekdays);
     expect(text).toContain("--\t--\therfstvakantie");
+  });
+
+  it("markeert wijzigingen en vermeldt de eerdere verdeling", () => {
+    const schedule = filledSchedule();
+    const changedDay = schedule.find((item) => !item.excluded)!;
+    const previousStudent = changedDay.assignments[0].studentId === "anna" ? "bram" : "anna";
+    changedDay.assignments[0].changedFromStudentId = previousStudent;
+    const text = buildScheduleTsv(schedule, students, settings.cleaningWeekdays);
+    expect(text).toContain("*");
+    expect(text).toContain("→");
+    expect(text).toContain(students.find((item) => item.id === previousStudent)!.name);
   });
 
   it("maakt een geldig en opgemaakt Excel-bestand", async () => {

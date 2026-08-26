@@ -23,6 +23,13 @@ describe("generateSchedule", () => {
     expect(groups[0].days.get(3)?.exclusionReason).toBe("herfstvakantie");
     expect(groups[0].days.get(5)?.exclusionReason).toBe("herfstvakantie");
   });
+
+  it("bewaart datumgebonden verhinderingen wanneer poetsdagen opnieuw worden gegenereerd", () => {
+    const existing = generateSchedule(settings, []);
+    existing[0].unavailableStudentIds = ["anna"];
+    const regenerated = generateSchedule(settings, [], existing);
+    expect(regenerated[0].unavailableStudentIds).toEqual(["anna"]);
+  });
 });
 
 describe("calculateStatistics", () => {

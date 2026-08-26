@@ -132,11 +132,17 @@ Minimaal:
 - Poetsdagen genereren
 - Uitzondering toevoegen
 - Optimale verdeling
+- Geavanceerd: ouder kan niet
+- Markeringen wissen
 - Automatische toewijzingen wissen
 - Printen
 - Alles wissen / reset
 
 Voor destructieve acties confirmation vragen.
+
+De geavanceerde bediening staat standaard uit en wordt met een vinkje geactiveerd. Bij iedere actieve poetsdatum verschijnt dan `Kan niet op deze datum`, met een inklapbare lijst van leerlingen. De teller toont hoeveel leerlingen voor die datum verhinderd zijn.
+
+Na een geslaagde ruil krijgen gewijzigde plekken een opvallende markering met `was [naam]`. In print en exports krijgt de nieuwe naam een `*` en vermeldt de kolom Opmerkingen de wijziging als `oude naam → nieuwe naam`.
 
 ---
 

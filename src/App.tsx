@@ -16,6 +16,11 @@ import {
   downloadSchedulePdf,
 } from "./services/export";
 import { optimizeSchedule } from "./services/optimizer";
+import {
+  acceptScheduleAdjustments,
+  hasScheduleAdjustments,
+  minimallyAdjustSchedule,
+} from "./services/scheduleAdjustment";
 import { buildWhatsappFeedbackUrl, loadRuntimeConfig } from "./services/runtimeConfig";
 import { loadSchoolExceptions } from "./services/schoolExceptions";
 import { LocalStorageProvider } from "./services/storage";
@@ -54,6 +59,9 @@ export default function App() {
   const [schoolFile, setSchoolFile] = useState<SchoolExceptionFile>(emptySchoolFile);
   const [schoolLoadError, setSchoolLoadError] = useState("");
   const [feedbackWhatsappNumber, setFeedbackWhatsappNumber] = useState("");
+  const [advancedMode, setAdvancedMode] = useState(false);
+  const [adjustmentMessage, setAdjustmentMessage] = useState("");
+  const [adjustmentSucceeded, setAdjustmentSucceeded] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -93,6 +101,7 @@ export default function App() {
   const activeSlots = activeSlotCount(state.schedule);
   const filledSlots = filledSlotCount(state.schedule);
   const average = state.students.length ? filledSlots / state.students.length : 0;
+  const hasAdjustments = hasScheduleAdjustments(state.schedule);
   const periodLabel = state.settings.startDate && state.settings.endDate
     ? `${formatLongDate(state.settings.startDate)} – ${formatLongDate(state.settings.endDate)}`
     : "Periode nog niet ingesteld";
@@ -124,6 +133,7 @@ export default function App() {
       students: current.students.filter((item) => item.id !== studentId),
       schedule: current.schedule.map((day) => ({
         ...day,
+        unavailableStudentIds: day.unavailableStudentIds?.filter((id) => id !== studentId),
         assignments: day.assignments.map((assignment) =>
           assignment.studentId === studentId
             ? { studentId: null, locked: false, source: null }
@@ -201,14 +211,66 @@ export default function App() {
     const result = optimizeSchedule(state.students, state.schedule);
     setState((current) => ({ ...current, schedule: result.schedule }));
     setWarnings([...new Set([...validationWarnings, ...result.warnings])]);
+    setAdjustmentMessage("");
+    setAdjustmentSucceeded(false);
+  };
+
+  const adjustUnavailable = (date: string, slot: number) => {
+    const result = minimallyAdjustSchedule(state.students, state.schedule, date, slot);
+    if (result.success) setState((current) => ({ ...current, schedule: result.schedule }));
+    setAdjustmentMessage(result.message);
+    setAdjustmentSucceeded(result.success);
+  };
+
+  const acceptAdjustments = () => {
+    if (!window.confirm("Wijzigingsmarkeringen wissen en dit rooster als nieuw uitgangspunt gebruiken?")) return;
+    setState((current) => ({ ...current, schedule: acceptScheduleAdjustments(current.schedule) }));
+    setAdjustmentMessage("De wijzigingen zijn als nieuw uitgangspunt geaccepteerd.");
+    setAdjustmentSucceeded(true);
+  };
+
+  const updateDateUnavailability = (date: string, studentId: string, unavailable: boolean) => {
+    const student = state.students.find((item) => item.id === studentId);
+    const day = state.schedule.find((item) => item.date === date);
+    setState((current) => ({
+      ...current,
+      schedule: current.schedule.map((item) => {
+        if (item.date !== date) return item;
+        const currentIds = item.unavailableStudentIds ?? [];
+        return {
+          ...item,
+          unavailableStudentIds: unavailable
+            ? [...new Set([...currentIds, studentId])]
+            : currentIds.filter((id) => id !== studentId),
+        };
+      }),
+    }));
+    const currentAssignment = day?.assignments.find((assignment) => assignment.studentId === studentId);
+    const isCurrentlyAssigned = Boolean(currentAssignment);
+    setAdjustmentMessage(
+      unavailable && currentAssignment?.locked
+        ? `${student?.name || "Deze leerling"} staat hier handmatig vast. Hef eerst het slotje op als deze beurt moet worden verplaatst.`
+        : unavailable && isCurrentlyAssigned
+        ? `${student?.name || "Deze leerling"} staat al op deze datum. Kies opnieuw Optimale verdeling of gebruik daarna Kan niet.`
+        : unavailable
+          ? `${student?.name || "Deze leerling"} wordt op deze datum niet automatisch ingepland.`
+          : "De datumuitzondering is verwijderd.",
+    );
+    setAdjustmentSucceeded(!isCurrentlyAssigned);
   };
 
   const assign = (date: string, slot: number, studentId: string | null) => {
     const day = state.schedule.find((item) => item.date === date);
     const student = state.students.find((item) => item.id === studentId);
-    if (student && day && needsAvailabilityWarning(student, day.weekday)) {
+    const conflicts = student && day
+      ? [
+          needsAvailabilityWarning(student, day.weekday) ? "niet als beschikbaar op deze weekdag" : "",
+          day.unavailableStudentIds?.includes(student.id) ? "als verhinderd op deze datum" : "",
+        ].filter(Boolean)
+      : [];
+    if (student && conflicts.length) {
       const accepted = window.confirm(
-        `${student.name} staat niet als beschikbaar op deze weekdag. Toch toewijzen en vastzetten?`,
+        `${student.name} staat ${conflicts.join(" en ")}. Toch toewijzen en vastzetten?`,
       );
       if (!accepted) return;
     }
@@ -253,6 +315,8 @@ export default function App() {
       })),
     }));
     setWarnings([]);
+    setAdjustmentMessage("");
+    setAdjustmentSucceeded(false);
   };
 
   const reset = async () => {
@@ -260,6 +324,9 @@ export default function App() {
     await storage.clear();
     setState(defaultState);
     setWarnings([]);
+    setAdjustmentMessage("");
+    setAdjustmentSucceeded(false);
+    setAdvancedMode(false);
   };
 
   const importRoster = (imported: PersistedState) => {
@@ -275,6 +342,9 @@ export default function App() {
     });
     setWarnings([]);
     setExportMessage("");
+    setAdjustmentMessage("");
+    setAdjustmentSucceeded(false);
+    setAdvancedMode(false);
   };
 
   const copySchedule = async () => {
@@ -403,12 +473,39 @@ export default function App() {
               <div><strong>{average.toLocaleString("nl-NL", { maximumFractionDigits: 2 })}</strong><span>gemiddeld</span></div>
             </div>
             <div className="no-print"><WarningPanel warnings={warnings} /></div>
+            <div className="advanced-adjustment no-print">
+              <div className="advanced-adjustment-actions">
+                <label className="advanced-toggle">
+                  <input
+                    type="checkbox"
+                    checked={advancedMode}
+                    disabled={state.schedule.length === 0}
+                    onChange={(event) => setAdvancedMode(event.target.checked)}
+                  />
+                  <span>Geavanceerd</span>
+                </label>
+                {hasAdjustments && (
+                  <button className="button ghost" type="button" onClick={acceptAdjustments}>
+                    Markeringen wissen
+                  </button>
+                )}
+              </div>
+              {advancedMode && (
+                <p>
+                  <strong>Vooraf:</strong> open bij een datum <strong>Kan niet op deze datum</strong> en vink de betreffende leerlingen aan. <strong>Na de verdeling:</strong> klik bij een toegewezen beurt op <strong>Kan niet</strong> voor een zo klein mogelijke ruil. Vaste keuzes worden niet gewijzigd.
+                </p>
+              )}
+              {adjustmentMessage && <p className={adjustmentSucceeded ? "adjustment-success" : "adjustment-result"} role="status">{adjustmentMessage}</p>}
+            </div>
             <ScheduleTable
               schedule={state.schedule}
               students={state.students}
               weekdays={state.settings.cleaningWeekdays}
+              advancedMode={advancedMode}
               onAssign={assign}
               onUnlock={unlock}
+              onUnavailable={adjustUnavailable}
+              onDateUnavailableChange={updateDateUnavailability}
             />
           </section>
           <Statistics students={state.students} schedule={state.schedule} weekdays={state.settings.cleaningWeekdays} />
