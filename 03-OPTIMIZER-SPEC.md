@@ -38,6 +38,12 @@ Iedere assignment verwijst naar een bestaande leerling.
 
 ---
 
+### H6. Minimaal vier weken tussen automatische beurten
+
+Een automatisch geplande beurt moet minimaal 28 dagen van iedere andere beurt van dezelfde leerling liggen. Handmatig vastgezette beurten mogen wel dichter bij elkaar staan. Als er voor een slot geen geldige automatische kandidaat overblijft, blijft het slot leeg en verschijnt er een waarschuwing.
+
+---
+
 ## Zachte constraints / optimalisatiedoelen
 
 In volgorde van belang:
@@ -84,7 +90,7 @@ Een praktische scoring kan daarom beide combineren.
 
 ### S3. Spreiding over het jaar
 
-Voorkom dat dezelfde leerling kort na elkaar poetst.
+Verdeel de beurten bovenop de harde ondergrens van vier weken zo gelijkmatig mogelijk over het jaar.
 
 Gebruik bijvoorbeeld:
 

@@ -1,5 +1,5 @@
 import type { OptimizerResult, ScheduleDay, Student, Weekday } from "../types";
-import { daysBetween, startOfWeek, weekdayLabel } from "../utils/dates";
+import { daysBetween, weekdayLabel } from "../utils/dates";
 
 type CandidateState = {
   count: number;
@@ -8,6 +8,8 @@ type CandidateState = {
 };
 
 type Slot = { dayIndex: number; assignmentIndex: number; candidateCount: number; date: string };
+
+export const MINIMUM_AUTOMATIC_INTERVAL_DAYS = 28;
 
 function cloneSchedule(schedule: ScheduleDay[]): ScheduleDay[] {
   return schedule.map((day) => ({
@@ -129,9 +131,8 @@ export function optimizeSchedule(
     });
   });
   slots.sort((a, b) =>
-    a.candidateCount - b.candidateCount ||
-    hash(`${seed}:week:${startOfWeek(a.date)}`) - hash(`${seed}:week:${startOfWeek(b.date)}`) ||
     a.date.localeCompare(b.date) ||
+    a.candidateCount - b.candidateCount ||
     a.assignmentIndex - b.assignmentIndex,
   );
   const preferredByStudent = preferredWeekdays(students, schedule, state, seed);
@@ -141,11 +142,16 @@ export function optimizeSchedule(
     const alreadyAssigned = new Set(
       day.assignments.map((assignment) => assignment.studentId).filter((id): id is string => Boolean(id)),
     );
-    const candidates = students.filter(
+    const availableCandidates = students.filter(
       (student) =>
         !student.manualOnly &&
         student.availableWeekdays.includes(day.weekday) &&
         !alreadyAssigned.has(student.id),
+    );
+    const candidates = availableCandidates.filter((student) =>
+      state.get(student.id)!.dates.every(
+        (assignedDate) => daysBetween(assignedDate, day.date) >= MINIMUM_AUTOMATIC_INTERVAL_DAYS,
+      ),
     );
     candidates.sort((a, b) => {
       const aState = state.get(a.id)!;
@@ -168,7 +174,11 @@ export function optimizeSchedule(
 
     const selected = candidates[0];
     if (!selected) {
-      warnings.push(`Geen beschikbare leerling voor ${weekdayLabel(day.weekday).toLowerCase()} ${day.date}.`);
+      warnings.push(
+        availableCandidates.length
+          ? `Geen leerling kon op ${weekdayLabel(day.weekday).toLowerCase()} ${day.date} automatisch worden ingepland met minimaal vier weken tussen twee poetsbeurten.`
+          : `Geen beschikbare leerling voor ${weekdayLabel(day.weekday).toLowerCase()} ${day.date}.`,
+      );
       continue;
     }
     day.assignments[slot.assignmentIndex] = {

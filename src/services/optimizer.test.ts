@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Assignment, ScheduleDay, Student, Weekday } from "../types";
-import { effectivePreviousYearCounts, optimizeSchedule } from "./optimizer";
+import { effectivePreviousYearCounts, MINIMUM_AUTOMATIC_INTERVAL_DAYS, optimizeSchedule } from "./optimizer";
+import { daysBetween } from "../utils/dates";
 
 const assignment = (studentId: string | null = null, locked = false): Assignment => ({
   studentId,
@@ -21,7 +22,7 @@ function students(count: number, availableWeekdays: Weekday[] = [3, 5]): Student
 function days(count: number, capacity = 1, weekdays: Weekday[] = [3, 5]): ScheduleDay[] {
   return Array.from({ length: count }, (_, index) => {
     const weekday = weekdays[index % weekdays.length];
-    const date = new Date(Date.UTC(2026, 0, 1 + index * 2)).toISOString().slice(0, 10);
+    const date = new Date(Date.UTC(2026, 0, 1 + index * 7)).toISOString().slice(0, 10);
     return { date, weekday, excluded: false, assignments: Array.from({ length: capacity }, () => assignment()) };
   });
 }
@@ -109,6 +110,42 @@ describe("optimizeSchedule", () => {
     }
   });
 
+  it("houdt bij automatische plaatsingen altijd minimaal vier weken afstand", () => {
+    const roster = students(8);
+    const result = optimizeSchedule(roster, weeklyDays(32), 404);
+
+    for (const student of roster) {
+      const dates = result.schedule
+        .filter((day) => day.assignments.some((item) => item.studentId === student.id))
+        .map((day) => day.date)
+        .sort();
+      dates.slice(1).forEach((date, index) => {
+        expect(daysBetween(dates[index], date)).toBeGreaterThanOrEqual(MINIMUM_AUTOMATIC_INTERVAL_DAYS);
+      });
+    }
+  });
+
+  it("laat een automatisch slot leeg als vier weken afstand niet mogelijk is", () => {
+    const roster = students(1, [3]);
+    const result = optimizeSchedule(roster, [
+      { date: "2026-01-07", weekday: 3, excluded: false, assignments: [assignment()] },
+      { date: "2026-01-14", weekday: 3, excluded: false, assignments: [assignment()] },
+    ]);
+
+    expect(result.schedule.flatMap((day) => day.assignments).filter((item) => item.studentId)).toHaveLength(1);
+    expect(result.warnings.some((warning) => warning.includes("minimaal vier weken"))).toBe(true);
+  });
+
+  it("staat precies vier weken tussen automatische beurten toe", () => {
+    const roster = students(1, [3]);
+    const result = optimizeSchedule(roster, [
+      { date: "2026-01-07", weekday: 3, excluded: false, assignments: [assignment()] },
+      { date: "2026-02-04", weekday: 3, excluded: false, assignments: [assignment()] },
+    ], 505);
+
+    expect(result.schedule.flatMap((day) => day.assignments).filter((item) => item.studentId)).toHaveLength(2);
+  });
+
   it("houdt bij flexibele beschikbaarheid zo veel mogelijk één vaste weekdag aan", () => {
     const roster = students(8);
     const result = optimizeSchedule(roster, weeklyDays(32), 303);
@@ -171,7 +208,7 @@ describe("optimizeSchedule", () => {
     const roster = students(4);
     const result = optimizeSchedule(roster, days(8, 3));
     result.schedule.forEach((day) => {
-      const ids = day.assignments.map((item) => item.studentId);
+      const ids = day.assignments.map((item) => item.studentId).filter((id): id is string => Boolean(id));
       expect(new Set(ids).size).toBe(ids.length);
     });
   });
@@ -197,5 +234,17 @@ describe("optimizeSchedule", () => {
     expect(counts(result.schedule, roster).get(roster[0].id)).toBe(2);
     expect(result.schedule[5].assignments[0]).toEqual(assignment(roster[0].id, true));
     expect(result.schedule[7].assignments[0]).toEqual(assignment(roster[0].id, true));
+  });
+
+  it("laat handmatige plaatsingen binnen vier weken staan", () => {
+    const roster = students(2);
+    const schedule = days(3);
+    schedule[0].assignments[0] = assignment(roster[0].id, true);
+    schedule[1].assignments[0] = assignment(roster[0].id, true);
+
+    const result = optimizeSchedule(roster, schedule, 606);
+
+    expect(result.schedule[0].assignments[0]).toEqual(assignment(roster[0].id, true));
+    expect(result.schedule[1].assignments[0]).toEqual(assignment(roster[0].id, true));
   });
 });

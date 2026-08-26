@@ -12,7 +12,10 @@ export function ParentGuide() {
         </li>
         <li>Voeg zo nodig bij <strong>Klasuitzonderingen</strong> een vrije dag voor alleen deze klas toe, bijvoorbeeld een schoolreisje.</li>
         <li>Kies in het lege rooster alvast leerlingnamen bij vaste poetsmomenten. Deze keuzes blijven vaststaan.</li>
-        <li>Kies <strong>Optimale verdeling</strong> om de overige momenten eerlijk te vullen.</li>
+        <li>
+          Kies <strong>Optimale verdeling</strong> om de overige momenten eerlijk te vullen. Automatisch ingeplande beurten liggen altijd minimaal vier weken uit elkaar.
+          Voor handmatig vastgezette momenten geldt deze grens niet.
+        </li>
         <li>Controleer het rooster en download, print of kopieer het. Gebruik <strong>Back-up &amp; import</strong> om later elders verder te werken.</li>
       </ol>
       <p className="guide-note">De schoolkalender onderaan is alleen voor beheerders; schoolbrede vrije dagen worden automatisch toegepast.</p>
