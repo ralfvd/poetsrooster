@@ -133,7 +133,7 @@ export function buildScheduleExcelData(
 ): SheetData {
   const rows = exportRows(schedule, students, settings.cleaningWeekdays, {
     shortWeekdays: true,
-    noteSeparator: "\n",
+    noteSeparator: " · ",
   });
   const columnCount = settings.cleaningWeekdays.length + 2;
   const mergedRow = (value: string, style: Record<string, unknown> = {}) => [
@@ -196,8 +196,8 @@ export async function downloadScheduleExcel(
   const { default: writeExcelFile } = await import("write-excel-file/browser");
   const columns = [
     { width: 14 },
-    ...settings.cleaningWeekdays.map(() => ({ width: 25 })),
-    { width: 44 },
+    ...settings.cleaningWeekdays.map(() => ({ width: 19 })),
+    { width: 56 },
   ];
   await writeExcelFile(buildScheduleExcelData(settings, schedule, students), {
     sheet: "Poetsrooster",
@@ -236,11 +236,11 @@ export async function createSchedulePdf(
   const headerHeight = 5.5;
   const rows = exportRows(schedule, students, settings.cleaningWeekdays, {
     shortWeekdays: true,
-    noteSeparator: "\n",
+    noteSeparator: " · ",
   });
   const rowHeight = Math.min(5.2, (pageHeight - margin - tableTop - headerHeight) / Math.max(rows.length, 1));
   const firstColumnWidth = 23;
-  const notesWidth = 42;
+  const notesWidth = 72;
   const weekdayWidth = (pageWidth - margin * 2 - firstColumnWidth - notesWidth) /
     Math.max(settings.cleaningWeekdays.length, 1);
   const columns = [firstColumnWidth, ...settings.cleaningWeekdays.map(() => weekdayWidth), notesWidth];

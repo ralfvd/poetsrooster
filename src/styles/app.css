@@ -159,8 +159,8 @@ table { width: 100%; border-collapse: collapse; }
 .schedule-table tbody th { width: 100px; color: #4d5956; background: #faf8f2; white-space: nowrap; }
 .schedule-table tbody tr:hover td, .schedule-table tbody tr:hover th { background-color: #f7fbf9; }
 .assignment-stack { display: grid; gap: .4rem; }
-.assignment { display: flex; min-width: 170px; flex-wrap: wrap; gap: .25rem; }
-.assignment select { min-width: 130px; padding: .45rem .5rem; border-radius: 6px; font-size: .8rem; }
+.assignment { display: flex; min-width: 150px; flex-wrap: wrap; gap: .25rem; }
+.assignment select { min-width: 115px; padding: .45rem .5rem; border-radius: 6px; font-size: .8rem; }
 .assignment.is-locked select { border-color: #bf8a54; background: #fff8e9; }
 .assignment.is-adjusted { padding: .25rem; border: 1px solid #d99042; border-radius: 7px; background: #fff6e8; }
 .assignment.is-adjusted select { border-color: #d99042; background: #fffaf2; }
@@ -174,7 +174,7 @@ table { width: 100%; border-collapse: collapse; }
 .date-unavailability-list input { margin: 0; accent-color: var(--brand); }
 .excluded-cell { color: #825e31; background: #faf2e7; font-weight: 800; text-align: center !important; }
 .muted-cell { color: #9ba29f; text-align: center !important; }
-.notes-cell { min-width: 190px; color: #74552f; font-size: .78rem; }
+.notes-cell { min-width: 260px; color: #74552f; font-size: .78rem; }
 .empty-schedule { display: grid; place-items: center; min-height: 280px; padding: 2rem; color: var(--muted); text-align: center; }
 .statistics-section { padding: 1.5rem 1.6rem; }
 .statistics-table { min-width: 760px; font-size: .82rem; }

@@ -109,7 +109,7 @@
   }
 
   .schedule-table th:first-child { width: 19mm; }
-  .schedule-table th:last-child { width: 38mm; }
+  .schedule-table th:last-child { width: 72mm; }
 
   .schedule-table tbody th {
     background: #fff;
@@ -133,9 +133,9 @@
 
   .notes-cell .print-notes {
     display: block !important;
-    white-space: pre-line !important;
+    white-space: nowrap !important;
     font-size: 6pt;
-    line-height: .9;
+    line-height: 1;
   }
 
   .schedule-table tbody tr:nth-child(even) > th,

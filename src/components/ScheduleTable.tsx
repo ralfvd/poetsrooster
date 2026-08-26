@@ -158,7 +158,7 @@ export function ScheduleTable({
               <td className="notes-cell">
                 <span className="no-print">{scheduleNotes(days.values(), studentsById)}</span>
                 <span className="print-only print-notes">
-                  {scheduleNotes(days.values(), studentsById, true, "\n")}
+                  {scheduleNotes(days.values(), studentsById, true, " · ")}
                 </span>
               </td>
             </tr>
