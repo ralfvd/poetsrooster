@@ -43,7 +43,7 @@ const defaultState: PersistedState = {
   settings: {
     className: "",
     startDate: "2026-08-24",
-    endDate: "2027-07-19",
+    endDate: "2027-07-23",
     cleaningWeekdays: [3, 5],
     studentsPerCleaningDay: 1,
   },

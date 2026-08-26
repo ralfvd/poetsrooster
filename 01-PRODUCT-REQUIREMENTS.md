@@ -43,7 +43,7 @@ De gebruiker stelt in:
 
 Voorbeeld:
 
-- Periode: 24 augustus 2026 t/m 19 juli 2027
+- Periode: 24 augustus 2026 t/m 23 juli 2027
 - Poetsdagen: woensdag en vrijdag
 - 1 kind per poetsdag
 
