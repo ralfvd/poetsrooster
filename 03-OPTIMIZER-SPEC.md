@@ -20,6 +20,8 @@ Deze mogen nooit automatisch geschonden worden.
 
 Een handmatig ingevulde assignment is immutable tijdens optimalisatie.
 
+Ook eerder automatisch ingevulde assignments blijven bij een volgende optimalisatie staan. De optimizer vult uitsluitend assignments zonder `studentId` (`Nog niet ingevuld`) en neemt alle bestaande assignments mee in de tellingen.
+
 ### H2. Beschikbaarheid per kind
 
 Een kind mag alleen automatisch ingepland worden op een weekdag die in `availableWeekdays` staat.
@@ -164,7 +166,7 @@ Niet simpelweg altijd chronologisch invullen als dit structurele bias geeft.
 
 Een bruikbare aanpak:
 
-1. Maak alle vrije slots.
+1. Verzamel alle slots met `Nog niet ingevuld`.
 2. Shuffle slots licht of werk per week.
 3. Vul slots iteratief.
 4. Eventueel tweede optimalisatiepass uitvoeren.
@@ -245,15 +247,15 @@ Aanbevolen voor de MVP.
 
 ---
 
-## Locked assignments meenemen in tellingen
+## Bestaande assignments meenemen in tellingen
 
 Voordat automatische slots worden ingevuld:
 
-- tel alle locked assignments mee in `currentYearCount`
+- tel alle reeds ingevulde assignments mee in `currentYearCount`
 - tel hun datum mee voor recency
 - tel hun weekday mee
 
-Zo vult de optimizer alleen het resterende rooster aan.
+Zo vult de optimizer alleen de plekken met `Nog niet ingevuld` aan, zonder bestaande namen te wijzigen.
 
 ---
 
@@ -370,6 +372,8 @@ Na optimizer:
 
 - deze 5 staan exact ongewijzigd
 - rest is eromheen geoptimaliseerd
+
+Hetzelfde geldt voor eerder automatisch ingevulde assignments: bij opnieuw optimaliseren blijven alle ingevulde namen staan en worden alleen leeggemaakte slots opnieuw verdeeld.
 
 ---
 

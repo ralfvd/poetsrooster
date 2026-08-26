@@ -206,14 +206,21 @@ describe("optimizeSchedule", () => {
     expect(result.warnings.some((warning) => warning.includes("Geen beschikbare leerling"))).toBe(true);
   });
 
-  it("kan tweemaal optimaliseren zonder locks of tellingen te beschadigen", () => {
+  it("laat bij opnieuw verdelen alle ingevulde vakken staan en vult alleen lege vakken", () => {
     const roster = students(10);
     const schedule = days(31);
     schedule[0].assignments[0] = assignment(roster[0].id, true);
-    const first = optimizeSchedule(roster, schedule);
-    const second = optimizeSchedule(roster, first.schedule);
+    const first = optimizeSchedule(roster, schedule, 707);
+    const existingAssignments = first.schedule.map((day) => day.assignments[0].studentId);
+    first.schedule[10].assignments[0] = assignment();
+
+    const second = optimizeSchedule(roster, first.schedule, 808);
+
     expect(second.schedule[0].assignments[0]).toEqual(assignment(roster[0].id, true));
     expect(second.schedule.flatMap((day) => day.assignments).filter((item) => item.studentId)).toHaveLength(31);
+    second.schedule.forEach((day, index) => {
+      if (index !== 10) expect(day.assignments[0].studentId).toBe(existingAssignments[index]);
+    });
     const values = [...counts(second.schedule, roster).values()];
     expect(Math.max(...values) - Math.min(...values)).toBeLessThanOrEqual(1);
     expect(second.schedule.flatMap((day) => day.assignments).filter((item) => !item.locked).every((item) => item.source === "optimizer")).toBe(true);

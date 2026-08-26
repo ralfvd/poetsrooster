@@ -143,8 +143,8 @@ Minimaal de scenario's uit `03-OPTIMIZER-SPEC.md`.
 Extra test:
 
 - optimizer twee keer achter elkaar draaien
-- locked assignments blijven gelijk
-- onlocked assignments mogen veranderen
+- alle ingevulde assignments blijven gelijk
+- alleen assignments met `Nog niet ingevuld` worden alsnog gevuld
 - total counts blijven logisch
 
 ---

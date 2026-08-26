@@ -100,16 +100,12 @@ export function optimizeSchedule(
       continue;
     }
     for (const assignment of day.assignments) {
-      if (!assignment.locked) {
-        assignment.studentId = null;
-        assignment.source = null;
-        continue;
-      }
-      if (!assignment.studentId || !validStudents.has(assignment.studentId)) {
+      if (!assignment.studentId) continue;
+      if (!validStudents.has(assignment.studentId)) {
         assignment.studentId = null;
         assignment.locked = false;
         assignment.source = null;
-        warnings.push(`Een vastgezette toewijzing op ${day.date} verwees niet naar een bestaande leerling.`);
+        warnings.push(`Een bestaande toewijzing op ${day.date} verwees niet naar een bestaande leerling.`);
         continue;
       }
       const candidate = state.get(assignment.studentId)!;
@@ -123,7 +119,7 @@ export function optimizeSchedule(
   schedule.forEach((day, dayIndex) => {
     if (day.excluded) return;
     day.assignments.forEach((assignment, assignmentIndex) => {
-      if (assignment.locked) return;
+      if (assignment.studentId) return;
       const candidateCount = students.filter(
         (student) => !student.manualOnly && student.availableWeekdays.includes(day.weekday),
       ).length;
@@ -197,7 +193,7 @@ export function optimizeSchedule(
     .filter((student) => !student.manualOnly)
     .map((student) => state.get(student.id)!.count);
   if (counts.length > 1 && Math.max(...counts) - Math.min(...counts) > 1) {
-    warnings.unshift("De verdeling is niet volledig gelijk door beschikbaarheid of vastgezette toewijzingen.");
+    warnings.unshift("De verdeling is niet volledig gelijk door beschikbaarheid of bestaande toewijzingen.");
   }
   return { schedule, warnings: [...new Set(warnings)] };
 }

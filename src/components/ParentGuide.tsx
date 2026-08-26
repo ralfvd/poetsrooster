@@ -16,7 +16,7 @@ export function ParentGuide() {
           Zet zo nodig <strong>Geavanceerd</strong> aan. Vink vóór de verdeling bij <strong>Kan niet op deze datum</strong> de verhinderde ouders/verzorgers aan.
         </li>
         <li>
-          Kies <strong>Optimale verdeling</strong> om de overige momenten eerlijk te vullen. Automatisch ingeplande beurten liggen altijd minimaal vier weken uit elkaar.
+          Kies <strong>Optimale verdeling</strong> om alleen de momenten met <strong>Nog niet ingevuld</strong> eerlijk te vullen. Alle namen die al in het rooster staan blijven behouden. Automatisch ingeplande beurten liggen altijd minimaal vier weken uit elkaar.
           Voor handmatig vastgezette momenten geldt deze grens niet.
         </li>
         <li>

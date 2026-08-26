@@ -243,12 +243,12 @@ assignment = {
 Bij optimalisatie:
 
 ```ts
-if (assignment.locked) {
+if (assignment.studentId) {
   continue;
 }
 ```
 
-Niet-locked optimizer assignments mogen eerst verwijderd en daarna opnieuw berekend worden.
+Iedere bestaande toewijzing blijft staan. Alleen assignments zonder `studentId` worden door de optimizer ingevuld; bestaande toewijzingen tellen wel mee voor de verdeling.
 
 ---
 

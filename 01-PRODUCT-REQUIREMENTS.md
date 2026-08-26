@@ -123,8 +123,9 @@ Zo'n toewijzing moet automatisch als `locked` / vastgezet worden beschouwd.
 
 Bij opnieuw drukken op `Optimale verdeling`:
 
-- locked assignments blijven staan
-- alleen niet-vastgezette assignments worden opnieuw berekend
+- alle reeds ingevulde assignments blijven staan, ongeacht hun bron of lockstatus
+- alleen assignments met `Nog niet ingevuld` worden automatisch verdeeld
+- bestaande assignments tellen mee bij het bepalen van een eerlijke verdeling van de lege plekken
 
 De gebruiker moet een lock ook weer kunnen verwijderen.
 
